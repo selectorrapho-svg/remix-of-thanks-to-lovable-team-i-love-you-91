@@ -1,46 +1,33 @@
-# Professional DJ engine upgrade
+# Plan: Scratch/BPM/Sync engine, AI stems, video-mode and mixer UI updates
 
-## Goal
-Make playback feel materially closer to a dedicated DJ app: lower-latency scratching, stable video output, and a Sync control that matches both tempo and beat phase instead of performing a one-time rough seek.
+## 1. Audio engine upgrades (no visible UI change)
+- Review MixCN (scratch, BPM detection, sync) and port its algorithms into the existing audio engine. Check its license first; if it is incompatible, re-implement the same approach instead of copying code.
+- Swap the current BPM detection for the new detector and make Sync lock tempo and phase using the new beat grid.
+- Make scratching (jogwheel and waveform) use the new scratch model so it sounds smoother.
 
-## Build
+## 2. Real AI stem separation (no visible UI change)
+- Build demucs-rs for the browser (WebAssembly, using WebGPU when the device supports it) and run it in a background worker.
+- Existing stem controls (vocals, drums, bass, other) will play real separated stems instead of frequency filters.
+- Trade-offs: the model is a large one-time download, about 80+ MB, and separation takes about a minute per track on phones. Until the stems are ready, the current filter-based stems keep working.
 
-### 1. Replace the split transport with one deck clock
-- Make the audio worklet the authoritative playhead for normal playback and scratching, so playback does not switch between a browser buffer source and a separate scratch source.
-- Keep the decoded track resident in the worklet, support signed playback rate, and use click-free ramps for touch-down, reversal, release, seek, cue, and loop jumps.
-- Remove synthetic scratch noise from the signal path and add short equal-power handoffs to prevent clicks or level jumps.
-- Preserve the existing EQ, filter, FX, stems, crossfader, cue, loop, and recording routing.
+## 3. Video mode
+- Replace the "Mixer" button with "Samples". The sample pads sit at the bottom of the center area, not the top.
+- Video-mode Hot cues view gets three tabs: Hot cues, Pitch cue (pads play the cue at different pitches), and Skip (pads jump forward or back by 1, 2, 4, 8, 16 or 32 beats).
 
-### 2. Build real BPM and beat-grid analysis
-- Analyze transient/onset strength across useful frequency bands, score tempo candidates with half/double-tempo correction, and calculate a first-beat phase marker.
-- Store BPM confidence and beat-grid offset on each loaded deck.
-- Draw the waveform beat grid from that detected offset rather than assuming the file starts exactly on beat one.
+## 4. Jogwheels
+- Add two new skins: Vinyl Gold and Vinyl Diamond. Each has a loaded look and an empty, darker look. They show album art like the other skins and have no marker.
 
-### 3. Make Sync continuous and predictable
-- Turn Sync into a true on/off deck state.
-- On activation, match tempo and align the nearest beat to the master deck.
-- While both decks play, apply small continuous phase corrections; use a bounded correction so it does not audibly hunt or jump.
-- Re-lock correctly after cueing, looping, seeking, or releasing a scratch.
-- Show inactive, locked, and unavailable Sync states in the existing controls.
+## 5. Crossfader Cut mode
+- Add a "Cut" toggle next to the crossfader.
+- When Cut is on and the knob is fully left or right, touching the fader track makes the knob jump to the touch point. On release it springs back to where it was. This makes scratching on Android easier.
 
-### 4. Move video compositing to WebGL
-- Add a WebGL2 compositor with one texture per deck, GPU crossfades/transitions, and GPU color effects.
-- Upload only newly decoded video frames using `requestVideoFrameCallback`, with a safe animation-frame fallback.
-- Keep the current canvas available for video recording and add a 2D fallback for devices without WebGL2.
-- Reduce hidden-video throttling risk and release textures/object URLs when tracks change.
+## 6. Compact landscape layout
+- Shrink the header, deck info rows and transport spacing so the file browser is reachable without scrolling.
 
-### 5. Lock video to the audio playhead
-- During normal playback, treat audio as the master clock and use gentle playback-rate correction before any hard seek.
-- During scratching, coalesce video seeks and present the newest decoded frame without blocking or slowing audio scratching.
-- Resume from the exact audio playhead after scratch release.
-- For video codecs the browser cannot decode into the audio engine, show that professional scratch/BPM sync is unavailable instead of silently using a second, unsynchronized audio clock.
+## 7. Pad FX
+- Add an On/Off button to the Pad FX panel to turn pad effects on or off.
 
-### 6. Verify the customer-critical flows
-- Verify song load, video load, play/pause, cue, loop, jog scratch, waveform scratch, BPM detection, Sync lock, crossfade, and video transitions.
-- Test portrait and Android-landscape-sized viewports, including rapid direction changes and repeated scratch releases.
-- Confirm clean build/runtime logs and document the remaining codec/device limitations honestly.
-
-## Technical boundaries
-- WebGL improves compositing and effects, but cannot make compressed video frame-accurately seekable; smooth video scratching still depends on codec, keyframe spacing, and device decoder speed.
-- Professional key-lock/time-stretch comparable to Serato, VirtualDJ, or djay requires a dedicated licensed or custom DSP engine. This upgrade will improve the current Web Audio engine substantially without claiming identical proprietary processing.
-- Browser file access remains permission-based. A truly native Android media library and unrestricted device integration require a separate Android wrapper/build phase.
+## Technical notes
+- Port engine code into `src/lib/dj` (beat detection, sync and scratch modules). Keep UI components the same except for the items above.
+- demucs-rs: compile with wasm-pack, place it in `public/`, run it in a Web Worker, and cache the model and stems in IndexedDB.
+- Cut mode: on pointerdown, save the fader value, call `setCrossfade(touch)`, and restore the saved value on pointerup or cancel.
