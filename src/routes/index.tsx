@@ -80,9 +80,9 @@ function DjApp() {
                 </div>
               </div>
               <div className="flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)] grid-cols-[minmax(0,1fr)_minmax(140px,24%)_minmax(0,1fr)] border-b-2 border-border" key={pair}>
-                <DeckPanel deck={decks.left} side="left" />
-                <CenterColumn deckA={decks.left} deckB={decks.right} mixer={mixer} />
-                <DeckPanel deck={decks.right} side="right" />
+                <DeckPanel deck={decks.left} side="left" videoMode={mode === "video"} />
+                <CenterColumn deckA={decks.left} deckB={decks.right} mixer={mixer} videoMode={mode === "video"} />
+                <DeckPanel deck={decks.right} side="right" videoMode={mode === "video"} />
               </div>
             </div>
           ) : (
@@ -107,9 +107,9 @@ function DjApp() {
                   </div>
                 </div>
                 <div className="flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)] grid-cols-[minmax(0,1fr)_minmax(140px,24%)_minmax(0,1fr)] border-b-2 border-border" key={pair}>
-                  <DeckPanel deck={decks.left} side="left" />
-                  <CenterColumn deckA={decks.left} deckB={decks.right} mixer={mixer} />
-                  <DeckPanel deck={decks.right} side="right" />
+                  <DeckPanel deck={decks.left} side="left" videoMode={mode === "video"} />
+                  <CenterColumn deckA={decks.left} deckB={decks.right} mixer={mixer} videoMode={mode === "video"} />
+                  <DeckPanel deck={decks.right} side="right" videoMode={mode === "video"} />
                 </div>
               </div>
             </>

@@ -50,7 +50,10 @@ export function useWaveScratch(deck: Deck, axis: "x" | "y", pxPerSec: () => numb
     deck.scratch(rate.current);
   };
 
-  useEffect(() => () => stopLoop(), []);
+  useEffect(() => () => {
+    stopLoop();
+    if (active.current) { active.current = false; deck.endScratch(); }
+  }, [deck]);
 
   return {
     onPointerDown: (e: React.PointerEvent) => {
@@ -77,6 +80,9 @@ export function useWaveScratch(deck: Deck, axis: "x" | "y", pxPerSec: () => numb
       if (!active.current || e.pointerId !== pointerId.current) return;
       // Serato-style: letting go snaps straight back to the platter speed.
       finish();
+    },
+    onLostPointerCapture: () => {
+      if (active.current) finish();
     },
     onPointerCancel: () => {
       if (active.current) finish();

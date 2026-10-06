@@ -5,6 +5,8 @@ import { useDeck } from "@/lib/dj/useMixer";
 import { Waveform } from "./Waveform";
 import { HorizontalWaveform } from "./HorizontalWaveform";
 import { useDjSettings } from "@/hooks/useDjSettings";
+import { Button } from "@/components/ui/button";
+import { WaveformOptions } from "./WaveformOptions";
 import { Crossfader } from "./Crossfader";
 import { VideoMixStage } from "./VideoMixStage";
 import { Knob } from "./Knob";
@@ -16,32 +18,33 @@ type CenterView = "mixer" | "wave" | "pads";
 
 const EQ_BANDS = ["high", "mid", "low"] as const;
 
-export function CenterColumn({ deckA, deckB, mixer }: { deckA: Deck; deckB: Deck; mixer: Mixer }) {
+export function CenterColumn({ deckA, deckB, mixer, videoMode = false }: { deckA: Deck; deckB: Deck; mixer: Mixer; videoMode?: boolean }) {
   useDeck(deckA);
   useDeck(deckB);
   const hasVideo = !!deckA.videoEl || !!deckB.videoEl;
-  const [view, setView] = useState<CenterView>("wave");
+  const [view, setView] = useState<CenterView | null>(null);
   const [djs] = useDjSettings();
   const vertical = djs.waveOrientation !== "horizontal";
 
   return (
     <div className="flex flex-col h-full py-2 gap-2">
-      {hasVideo && <FloatingVideo deckA={deckA} deckB={deckB} />}
+      {videoMode ? <div className="min-h-0 flex-1 flex items-center"><VideoMixStage deckA={deckA} deckB={deckB} embedded /></div> : hasVideo && <FloatingVideo deckA={deckA} deckB={deckB} />}
 
       {/* 3-button view switcher — Mixer / Waveform (default) / Pads */}
       <div className="flex items-center justify-center gap-2 py-0.5">
-        <ViewButton active={view === "mixer"} onClick={() => setView("mixer")} label="Mixer">
+        <ViewButton active={view === "mixer"} onClick={() => setView(current => current === "mixer" ? null : "mixer")} label="Mixer">
           <Sliders className="w-4 h-4" />
         </ViewButton>
-        <ViewButton active={view === "wave"} onClick={() => setView("wave")} label="Waveform">
+        <ViewButton active={view === "wave"} onClick={() => setView(current => current === "wave" ? null : "wave")} label="Waveforms">
           <Activity className="w-4 h-4" />
         </ViewButton>
-        <ViewButton active={view === "pads"} onClick={() => setView("pads")} label="Pads">
+        <ViewButton active={view === "pads"} onClick={() => setView(current => current === "pads" ? null : "pads")} label="Hot cues">
           <Grid3x3 className="w-4 h-4" />
         </ViewButton>
+        {view === "wave" && <WaveformOptions />}
       </div>
 
-      <div className="flex-1 min-h-0 border-b border-border">
+      <div className={`${view ? "flex-1" : videoMode ? "hidden" : "flex-1"} min-h-0 border-b border-border`}>
         {view === "wave" && (
           <div className={`flex h-full min-h-0 gap-1 ${vertical ? "" : "flex-col"}`}>
             {!vertical && (<>
@@ -49,7 +52,7 @@ export function CenterColumn({ deckA, deckB, mixer }: { deckA: Deck; deckB: Deck
               <div className="flex-1 min-h-0"><HorizontalWaveform deck={deckB} color="#3bd2ff" index={2} /></div>
             </>)}
             {vertical && (<>
-            <div className="flex-1 min-w-0">
+            <div className="relative flex-1 min-w-0">
               <Waveform deck={deckA} side="left" color="#ff8a3b" />
             </div>
             <div className="flex-1 min-w-0">
@@ -74,7 +77,7 @@ export function CenterColumn({ deckA, deckB, mixer }: { deckA: Deck; deckB: Deck
       </div>
 
       <div className="px-2 border-t-2 border-border pt-2 relative before:absolute before:left-1/2 before:-translate-x-1/2 before:-top-4 before:h-4 before:w-px before:bg-border">
-        <Crossfader onChange={(v) => mixer.setCrossfade(v)} />
+        <Crossfader value={mixer.lastCross} onChange={(v) => mixer.setCrossfade(v)} />
       </div>
     </div>
   );
@@ -82,15 +85,16 @@ export function CenterColumn({ deckA, deckB, mixer }: { deckA: Deck; deckB: Deck
 
 function ViewButton({ active, onClick, label, children }: { active: boolean; onClick: () => void; label: string; children: React.ReactNode }) {
   return (
-    <button
+    <Button variant="ghost"
       onClick={onClick}
+      aria-pressed={active}
       aria-label={label}
       title={label}
       className={`grid h-7 w-9 place-items-center rounded-md ${active ? "dj-glass-on text-primary" : "dj-glass text-muted-foreground"}`}
       style={active ? { boxShadow: "0 0 10px rgba(80,160,255,0.35), var(--glass-shadow)" } : undefined}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 

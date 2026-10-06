@@ -203,6 +203,8 @@ export function SettingsPanel({
             </Section>
 
             <Section title="Waveform">
+              <label className="mb-3 flex items-center justify-between text-xs text-muted-foreground">High contrast<input type="checkbox" checked={s.waveHighContrast} onChange={e => setS({ waveHighContrast: e.target.checked })} /></label>
+              <label className="mb-3 flex items-center justify-between text-xs text-muted-foreground">Waveform scratch<input type="checkbox" checked={s.waveScratch} onChange={e => setS({ waveScratch: e.target.checked })} /></label>
               <div className="grid grid-cols-2 gap-2">
                 <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Direction
                   <select value={s.waveOrientation} onChange={(e) => setS({ waveOrientation: e.target.value as typeof s.waveOrientation })} className="mt-1 w-full rounded-sm border border-border bg-secondary px-2 py-2 text-xs text-foreground">
@@ -367,17 +369,10 @@ function Pill({
   children: React.ReactNode;
 }) {
   return (
-    <button
-      onClick={onClick}
-      className="px-2 py-1.5 rounded-sm border text-[11px] uppercase tracking-widest"
-      style={{
-        borderColor: on ? "#ff8a3b" : "#222",
-        background: on ? "#ff8a3b22" : "#0a0a0a",
-        color: on ? "#ff8a3b" : "#888",
-      }}
-    >
+    <Button variant="ghost" onClick={onClick} aria-pressed={on}
+      className={`min-h-9 h-auto px-2 py-1.5 rounded-md text-[11px] whitespace-normal ${on ? "dj-glass-on text-primary" : "dj-glass text-muted-foreground"}`}>
       {children}
-    </button>
+    </Button>
   );
 }
 

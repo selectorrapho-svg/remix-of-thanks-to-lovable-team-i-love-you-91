@@ -6,8 +6,9 @@ import { DeckTools } from "./DeckTools";
 import { DeckFxPanel } from "./DeckFxPanel";
 import { SyncButton } from "./SyncButton";
 
-import { Play, ChevronLeft, ChevronRight, ChevronDown, Repeat, Check } from "lucide-react";
+import { Pause, Play, ChevronLeft, ChevronRight, ChevronDown, Repeat, Check } from "lucide-react";
 import { useState } from "react";
+import { VideoPreview } from "./VideoPreview";
 import { Button } from "@/components/ui/button";
 
 const LOOP_LENGTHS = ["1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4", "8", "16", "32"];
@@ -18,11 +19,13 @@ interface Props {
   deck: Deck;
   side: "left" | "right";
   compact?: boolean;
+  videoMode?: boolean;
 }
 
-export function DeckPanel({ deck, side, compact }: Props) {
+export function DeckPanel({ deck, side, compact, videoMode }: Props) {
   useDeck(deck);
   const accent = side === "left" ? "#ff8a3b" : "#3bd2ff";
+  const [showVideo, setShowVideo] = useState(true);
   const [loopIdx, setLoopIdx] = useState(7); // default "4"
   const [loopMenuOpen, setLoopMenuOpen] = useState(false);
   const [loopMode, setLoopMode] = useState(LOOP_MODES[0]);
@@ -134,8 +137,9 @@ export function DeckPanel({ deck, side, compact }: Props) {
             </div>
           </div>
         ) : (
-          <div className="flex-1 min-h-0 flex items-center justify-center w-full py-1 landscape-jog-slot">
-            <JogWheel deck={deck} size={232} accent={accent} />
+          <div className="flex-1 min-h-0 flex items-center justify-center w-full py-1 relative landscape-jog-slot">
+            {videoMode && <Button variant="ghost" size="icon" className="absolute top-1 left-1 z-10 dj-glass rounded-full" aria-label={`${showVideo ? "Hide" : "Show"} video deck ${deck.id}`} aria-expanded={showVideo} onClick={() => setShowVideo(v => !v)}><ChevronDown className={showVideo ? "" : "rotate-180"} /></Button>}
+            {videoMode && showVideo ? <div className="deck-video-preview relative w-full h-full overflow-hidden rounded-md bg-background"><VideoPreview deck={deck} />{!deck.videoEl && <span className="absolute inset-0 grid place-items-center text-xs text-muted-foreground">Deck {deck.id} video</span>}</div> : <JogWheel deck={deck} size={272} accent={accent} />}
           </div>
         )}
 
@@ -143,15 +147,15 @@ export function DeckPanel({ deck, side, compact }: Props) {
         <div className="w-full shrink-0 grid grid-cols-4 items-center gap-1 text-[10px] landscape-transport">
           <Button variant="ghost"
             onClick={() => deck.toggle()}
-            className={`shrink-0 rounded-xl flex items-center justify-center ${compact ? "h-10" : "h-11"} ${deck.playing ? "dj-glass-on" : "dj-glass"}`}
-            style={{ boxShadow: deck.playing ? "0 0 14px #3bff8a99, var(--glass-shadow)" : undefined }}
+            aria-label={`${deck.playing ? "Pause" : "Play"} deck ${deck.id}`}
+            className={`transport-play shrink-0 rounded-full flex items-center justify-center ${compact ? "h-10" : "h-11"} ${deck.playing ? "dj-glass-on transport-playing" : "dj-glass"}`}
             title="Play / Pause"
           >
-            <Play className={compact ? "w-5 h-5" : "w-6 h-6"} fill={deck.playing ? "#3bff8a" : "currentColor"} stroke="none" />
+            {deck.playing ? <Pause className="size-5" fill="currentColor" /> : <Play className="size-5" fill="currentColor" />}
           </Button>
           <Button variant="ghost"
             onClick={() => deck.setCue()}
-            className={`shrink-0 rounded-xl dj-glass uppercase tracking-widest font-bold ${compact ? "px-1 h-10 text-[10px]" : "px-1 h-11 text-[11px]"}`}
+            className={`shrink-0 rounded-md dj-glass uppercase tracking-widest font-bold ${compact ? "px-1 h-10 text-[10px]" : "px-1 h-11 text-[11px]"}`}
             title="Set cue point at current position"
           >
             Set
@@ -166,7 +170,7 @@ export function DeckPanel({ deck, side, compact }: Props) {
               deck.seek(deck.cuePoint);
             }}
             onPointerCancel={() => { deck.pause(); deck.seek(deck.cuePoint); }}
-            className={`shrink-0 rounded-xl dj-glass flex items-center justify-center ${compact ? "h-10" : "h-11"}`}
+            className={`shrink-0 rounded-md dj-glass flex items-center justify-center ${compact ? "h-10" : "h-11"}`}
             title="Hold to preview from cue"
           >
             <Repeat className="w-4 h-4" style={{ color: accent }} />

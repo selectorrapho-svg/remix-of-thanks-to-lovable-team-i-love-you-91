@@ -6,3 +6,8 @@
 - [x] Activate portrait cue/retrigger, replace vinyl artwork with supplied jog parts, and fit landscape transport/crossfader.
 - [ ] Add library sorting/files view, reference-style FX/sampler grids, and adjustable FX beats.
 - [ ] Add floating master/A/B video monitors and 100+ functional transition/VFX presets; verify browser playback and scratch path.
+
+- [ ] Restyle landscape transport/crossfader as frosted dark-grey controls without gradients; enlarge jogwheels, restore skins and add Rane-inspired style without marker.
+- [ ] Hide initial landscape waveforms; add view toggles, waveform dropdown settings and RGB frequency colours.
+- [ ] Add independently collapsible video deck previews retaining master output; verify crossfader interaction.
+- [ ] Download and review Mixxx as a reference; document native engine integration limits.
