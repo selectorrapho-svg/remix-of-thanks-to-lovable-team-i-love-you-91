@@ -8,6 +8,8 @@ import { useTheme, THEMES } from "@/hooks/useTheme";
 import { connectMidi, subscribeMidi, MidiInfo } from "@/lib/dj/midi";
 import { Portal } from "./Portal";
 import { Button } from "@/components/ui/button";
+import { AccountPanel } from "./AccountPanel";
+import { isPro } from "@/lib/dj/license";
 import settingsArtwork from "@/assets/djogwheels-splash-clean.jpg";
 import brandLogo from "@/assets/djogwheels-user-logo-cropped.png";
 import {
@@ -27,7 +29,7 @@ export function SettingsPanel({
   setMode: (m: AppMode) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [page, setPage] = useState<"decks" | "appearance" | "playback">("decks");
+  const [page, setPage] = useState<"account" | "decks" | "appearance" | "playback">("account");
   const [s, setS] = useDjSettings();
   const { theme, setTheme } = useTheme();
   const [recording, setRecording] = useState(false);
@@ -102,12 +104,36 @@ export function SettingsPanel({
               </Button>
             </div>
 
-            <div className="sticky top-[53px] z-10 mb-4 grid grid-cols-3 gap-1 border-b border-border bg-background/90 p-1 backdrop-blur" role="tablist" aria-label="Settings categories">
-              {([ ["decks", "Decks"], ["appearance", "Appearance"], ["playback", "Audio & video"] ] as const).map(([key, label]) => (
+            <div className="sticky top-[53px] z-10 mb-4 grid grid-cols-4 gap-1 border-b border-border bg-background/90 p-1 backdrop-blur" role="tablist" aria-label="Settings categories">
+              {([ ["account", "Account"], ["decks", "Decks"], ["appearance", "Appearance"], ["playback", "Audio & video"] ] as const).map(([key, label]) => (
                 <Button key={key} role="tab" aria-selected={page === key} variant={page === key ? "default" : "ghost"} onClick={() => setPage(key)} className="h-10 min-w-0 px-1 text-[11px] sm:text-sm">{label}</Button>
               ))}
             </div>
             <div className="pb-8">
+            {page === "account" && <>
+            <Section title="Subscription">
+              {!isPro() ? (
+                <div className="relative overflow-hidden rounded-2xl border border-border">
+                  <img src={settingsArtwork} alt="" className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40" />
+                  <div className="relative rounded-2xl bg-background/80 p-4 backdrop-blur">
+                    <div className="text-sm font-bold uppercase tracking-widest">Go PRO — <span className="text-primary">150 KES / month</span></div>
+                    <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      <li>• Custom logo watermark on video</li>
+                      <li>• Record video (360p–1080p) and MP3/WAV audio</li>
+                      <li>• Real AI stems separation</li>
+                    </ul>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <a href={lic.waUrl()} target="_blank" rel="noreferrer"><Button>Pay on WhatsApp</Button></a>
+                      <Button variant="outline" onClick={() => setPage("account")}>Account & unlock code</Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-primary/60 bg-primary/10 p-4 text-sm font-semibold">PRO active — every feature unlocked.</div>
+              )}
+            </Section>
+            <AccountPanel />
+            </>}
             {page === "decks" && <>
             <Section title="Modes & Decks">
               <div className="grid grid-cols-3 landscape:grid-cols-6 gap-2 landscape:gap-3">
