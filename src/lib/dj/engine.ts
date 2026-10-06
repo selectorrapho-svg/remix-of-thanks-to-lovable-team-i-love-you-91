@@ -127,6 +127,22 @@ export interface HotCue {
 
 type Listener = () => void;
 
+function openVideo(url: string): Promise<HTMLVideoElement> {
+  const v = document.createElement("video");
+  // Only blob/remote sources need CORS; local app files fail with it on some Android WebViews.
+  if (!url.startsWith("blob:") && !/^https?:\/\/localhost/.test(url) && !url.startsWith("capacitor:")) v.crossOrigin = "anonymous";
+  v.preload = "auto";
+  v.muted = true;
+  v.playsInline = true;
+  v.setAttribute("playsinline", "");
+  v.src = url;
+  return new Promise((res, reject) => {
+    const t = setTimeout(() => reject(new Error("This video took too long to open.")), 20000);
+    v.onloadedmetadata = () => { clearTimeout(t); res(v); };
+    v.onerror = () => { clearTimeout(t); reject(new Error("This video format cannot be played on this device.")); };
+  });
+}
+
 export class Deck {
   ctx: AudioContext;
   id: DeckId;
@@ -324,13 +340,12 @@ export class Deck {
     this.coverUrl = coverUrl;
     this.videoEl?.pause();
     this.videoEl = null;
-    const res = await fetch(url);
-    const ab = await res.arrayBuffer();
-    if (/\.(mp4|webm|mov|m4v)(?:$|\?)/i.test(url)) {
-      const file = new File([ab], name, { type: url.includes('.webm') ? 'video/webm' : 'video/mp4' });
-      await this.loadFile(file);
+    if (/\.(mp4|webm|mov|m4v|3gp|mkv)(?:$|\?)/i.test(url) || /video/i.test(url)) {
+      await this.loadVideoSrc(url, null);
       return;
     }
+    const res = await fetch(url);
+    const ab = await res.arrayBuffer();
     void native.load(this.id, ab.slice(0));
     this.buffer = await this.ctx.decodeAudioData(ab);
     this.reverseBuffer = makeReversedBuffer(this.ctx, this.buffer);
@@ -341,6 +356,25 @@ export class Deck {
     this.firstBeat = 0;
     if (this.buffer) void this.scratchPlayer?.prime(this.buffer);
     this.afterLoad();
+    this.emit();
+  }
+
+  /**
+   * Stream a video straight from its URL (phone storage in the Android app).
+   * Avoids reading the whole file into memory, which froze large videos.
+   * The video element itself is the clock and audible source.
+   */
+  private async loadVideoSrc(url: string, coverUrl: string | null) {
+    const v = await openVideo(url);
+    if (coverUrl !== null) this.coverUrl = coverUrl;
+    this.videoEl = v;
+    this.buffer = null;
+    this.reverseBuffer = null;
+    this.pausedAt = 0;
+    this.cuePoint = 0;
+    this.hotCues = Array(8).fill(null);
+    this.bpm = 0;
+    this.firstBeat = 0;
     this.emit();
   }
 
@@ -428,16 +462,8 @@ export class Deck {
     const isVideo = file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name);
     this.trackName = file.name.replace(/\.[^.]+$/, "");
     if (isVideo) {
-      const url = URL.createObjectURL(file);
-      const v = document.createElement("video");
-      v.src = url;
-      v.crossOrigin = "anonymous";
-      v.muted = true;
-      v.playsInline = true;
-      await new Promise<void>((res, reject) => {
-        v.onloadedmetadata = () => res();
-        v.onerror = () => reject(new Error('This video format cannot be played on this device.'));
-      });
+      if (file.size > 120 * 1024 * 1024) { await this.loadVideoSrc(URL.createObjectURL(file), null); return; }
+      const v = await openVideo(URL.createObjectURL(file));
       this.videoEl = v;
       const ab = await file.arrayBuffer();
       try {
