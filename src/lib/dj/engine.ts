@@ -1,5 +1,7 @@
 import { native, isNative } from "./nativeAudio";
 import { ScratchPlayer } from "./scratchPlayer";
+import { analyzeBeatGrid } from "./mixcn/beatgrid";
+import { separateStems } from "./stems";
 
 // Web Audio DJ engine. Four decks with per-deck FX, frequency isolation, EQ,
 // crossfader, scratch playback, spectrum waveforms and master recording.
@@ -171,6 +173,13 @@ export class Deck {
   private nativePositionBusy = false;
   private lastNativePosition = 0;
   bpm = 0;
+  /** Seconds of the first beat (MixCN beat grid) — used for phase sync. */
+  firstBeat = 0;
+  /** True once AI (Demucs) stems replace the frequency-band stems. */
+  realStems = false;
+  private loadToken = 0;
+  private stemSplitter: ChannelSplitterNode | null = null;
+  private stemMergers: ChannelMergerNode[] = [];
   trackName = "";
   videoEl: HTMLVideoElement | null = null;
   coverUrl: string | null = null;
@@ -329,7 +338,77 @@ export class Deck {
     this.cuePoint = 0;
     this.hotCues = Array(8).fill(null);
     this.bpm = estimateBpm(this.buffer);
+    this.firstBeat = 0;
     if (this.buffer) void this.scratchPlayer?.prime(this.buffer);
+    this.afterLoad();
+    this.emit();
+  }
+
+  /** Background analysis: accurate beat grid, then optional AI stems. */
+  private afterLoad() {
+    const token = ++this.loadToken;
+    this.resetStemRouting();
+    const buf = this.buffer;
+    if (!buf) return;
+    void analyzeBeatGrid(buf).then((g) => {
+      if (token !== this.loadToken || !g || !g.bpm) return;
+      this.bpm = Math.round(g.bpm * 100) / 100;
+      this.firstBeat = g.firstBeat;
+      this.emit();
+    });
+    void separateStems(buf).then((res) => {
+      if (token !== this.loadToken || !res) return;
+      this.applyRealStems(res);
+    }).catch(() => { /* keep frequency stems */ });
+  }
+
+  private resetStemRouting() {
+    if (!this.realStems) return;
+    try { this.stemSplit.disconnect(); } catch { /* noop */ }
+    this.stemSplitter?.disconnect();
+    this.stemMergers.forEach((m) => m.disconnect());
+    this.stemSplitter = null;
+    this.stemMergers = [];
+    for (const k of STEM_ORDER) {
+      this.stemSplit.connect(this.stems[k].filter);
+      this.stems[k].filter.connect(this.stems[k].gain);
+    }
+    this.realStems = false;
+  }
+
+  /** Swap in an 8-channel buffer (4 stereo stems) and route each pair to its stem gain. */
+  private applyRealStems(res: { stems: Record<StemKey, [Float32Array, Float32Array]>; sampleRate: number }) {
+    const first = res.stems.drums[0];
+    const multi = this.ctx.createBuffer(8, first.length, res.sampleRate);
+    STEM_ORDER.forEach((k, i) => {
+      multi.copyToChannel(res.stems[k][0] as Float32Array<ArrayBuffer>, i * 2);
+      multi.copyToChannel(res.stems[k][1] as Float32Array<ArrayBuffer>, i * 2 + 1);
+    });
+    const pos = this.currentTime;
+    const wasPlaying = this.playing;
+    if (wasPlaying) this.pause();
+    // Nodes upstream must carry all 8 channels discretely.
+    for (const n of [this.gain, this.eqLow, this.eqMid, this.eqHigh, this.filter, this.stemSplit] as AudioNode[]) {
+      n.channelCountMode = "max";
+      n.channelInterpretation = "discrete";
+    }
+    try { this.stemSplit.disconnect(); } catch { /* noop */ }
+    const splitter = this.ctx.createChannelSplitter(8);
+    this.stemSplit.connect(splitter);
+    this.stemMergers = STEM_ORDER.map((k, i) => {
+      const m = this.ctx.createChannelMerger(2);
+      splitter.connect(m, i * 2, 0);
+      splitter.connect(m, i * 2 + 1, 1);
+      try { this.stems[k].filter.disconnect(); } catch { /* noop */ }
+      m.connect(this.stems[k].gain);
+      return m;
+    });
+    this.stemSplitter = splitter;
+    this.buffer = multi;
+    this.reverseBuffer = makeReversedBuffer(this.ctx, multi);
+    this.realStems = true;
+    this.pausedAt = pos;
+    if (wasPlaying) this.play();
     this.emit();
   }
 
@@ -382,7 +461,9 @@ export class Deck {
     this.cuePoint = 0;
     this.hotCues = Array(8).fill(null);
     this.bpm = estimateBpm(this.buffer);
+    this.firstBeat = 0;
     if (this.buffer) void this.scratchPlayer?.prime(this.buffer);
+    this.afterLoad();
     this.emit();
   }
 
@@ -550,8 +631,8 @@ export class Deck {
     let nudge = 0;
     if (this.playing && m.playing) {
       const beatM = 60 / (m.bpm * m.rate);
-      const phM = m.currentTime % (60 / m.bpm) / (60 / m.bpm);
-      const phS = this.currentTime % (60 / this.bpm) / (60 / this.bpm);
+      const phM = beatPhase(m.currentTime - m.firstBeat, 60 / m.bpm);
+      const phS = beatPhase(this.currentTime - this.firstBeat, 60 / this.bpm);
       let d = phM - phS; // in beats
       if (d > 0.5) d -= 1;
       if (d < -0.5) d += 1;
@@ -583,9 +664,11 @@ export class Deck {
     // phase align: snap pausedAt so beats align with other's currentTime
     const beat = 60 / other.bpm;
     if (beat > 0 && this.duration > 0) {
-      const offset = other.currentTime % beat;
-      const cur = this.currentTime;
-      const snapped = Math.round(cur / beat) * beat + offset;
+      const myBeat = 60 / this.bpm;
+      const target = beatPhase(other.currentTime - other.firstBeat, beat);
+      const cur = this.currentTime - this.firstBeat;
+      let snapped = Math.floor(cur / myBeat) * myBeat + target * myBeat + this.firstBeat;
+      if (snapped - this.currentTime > myBeat / 2) snapped -= myBeat;
       this.seek(Math.max(0, Math.min(this.duration, snapped)));
     }
     this.emit();
@@ -1457,6 +1540,12 @@ function makeSaturationCurve(drive = 1.5) {
 }
 
 
+
+const STEM_ORDER: StemKey[] = ["drums", "bass", "other", "vocals"];
+function beatPhase(t: number, beat: number) {
+  const x = (t % beat) / beat;
+  return x < 0 ? x + 1 : x;
+}
 
 function estimateBpm(buf: AudioBuffer | null): number {
   if (!buf) return 0;
