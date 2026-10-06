@@ -156,8 +156,8 @@ export function Waveform({ deck, side }: Props) {
   });
 
   return (
-    <div className="relative w-full h-full" style={{ touchAction: "none" }} {...scratch}>
-      <canvas ref={canvasRef} className="w-full h-full block" style={{ background: "#050505" }} />
+    <div className="relative w-full h-full overflow-hidden" style={{ touchAction: "none" }} {...scratch}>
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" style={{ background: "#050505" }} />
 
       <div className={`absolute ${side === "left" ? "right-1" : "left-1"} top-1 flex flex-col gap-1`}>
         <button
