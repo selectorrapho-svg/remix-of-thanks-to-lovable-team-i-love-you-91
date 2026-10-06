@@ -37,7 +37,7 @@ function MiniDeckHeader({ deck, side, onLibrary }: { deck: Deck; side: "left" | 
       aria-label={`Load track on deck ${deck.id}`}
     >
       <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center border border-border bg-secondary">
-        <Music className="w-3.5 h-3.5" style={{ color: accent }} />
+        {deck.coverUrl ? <img src={deck.coverUrl} alt={`${deck.trackName} album cover`} className="size-full rounded-full object-cover" /> : <Music className="w-3.5 h-3.5" style={{ color: accent }} />}
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-[9px] uppercase tracking-widest" style={{ color: accent }}>Deck {deck.id}</div>

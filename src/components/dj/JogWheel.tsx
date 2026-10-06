@@ -14,9 +14,8 @@ import jogNeonDisc from "@/assets/jogs/jog-neon-disc.webp";
 import diamondArm from "@/assets/jogs/diamond_skin_tete_de_lecture_left.webp.asset.json";
 import goldArm from "@/assets/jogs/gold_skin_tete_de_lecture.webp.asset.json";
 import neonArm from "@/assets/jogs/neon_skin_tete_de_lecture.jpg.asset.json";
-import referencePlatter from "@/assets/jogs/reference-platter.webp.asset.json";
-import referenceArtwork from "@/assets/jogs/reference-artwork.webp.asset.json";
-import referenceRing from "@/assets/jogs/reference-ring.webp.asset.json";
+import unloadedJog from "@/assets/jogs/jog-unloaded.png.asset.json";
+import loadedJog from "@/assets/jogs/jog-loaded.png.asset.json";
 
 const JOG_BG: Record<string, string> = {
   silver: "#c8c8c8",
@@ -204,18 +203,18 @@ export function JogWheel({ deck, size, accent }: Props) {
     return `${sign}${m.toString().padStart(2, "0")}:${s2.padStart(4, "0")}`;
   };
 
-  const loaded = !!deck.buffer;
-  const markerColor = loaded ? "#ff3b3b" : "#444";
+  const loaded = !!deck.buffer || !!deck.videoEl;
   const is3d = JOG_3D.has(s.jogStyle);
   const arm = VINYL_ARM[s.jogStyle];
   const isVinyl = !!arm;
 
   return (
     <div className="reference-jog" style={{ width: size, maxWidth: "100%" }}>
-      <div ref={ref} role="slider" aria-label={`Scratch deck ${deck.id}`} aria-valuemin={0} aria-valuemax={deck.duration} aria-valuenow={deck.currentTime} className="relative aspect-square w-full touch-none select-none">
-        <img src={referenceRing.url} alt="" draggable={false} className="absolute inset-[5%] w-[90%] h-[90%] pointer-events-none" />
-        <div ref={ringRef} className="absolute inset-[15%] pointer-events-none will-change-transform"><img src={referenceArtwork.url} alt="" draggable={false} className="size-full rounded-full" /></div>
-        <img src={referencePlatter.url} alt="Silver jog platter" draggable={false} className="absolute inset-0 size-full pointer-events-none" />
+      <div ref={ref} data-loaded={loaded} role="slider" aria-label={`Scratch deck ${deck.id}`} aria-valuemin={0} aria-valuemax={deck.duration} aria-valuenow={deck.currentTime} className="relative aspect-square w-full touch-none select-none">
+        <div ref={ringRef} className="absolute inset-0 pointer-events-none will-change-transform">
+          <img src={loaded ? loadedJog.url : unloadedJog.url} alt={loaded ? "Loaded silver jogwheel" : "Empty dark jogwheel"} draggable={false} className="size-full rounded-full object-contain" />
+          {loaded && deck.coverUrl && <img src={deck.coverUrl} alt="" draggable={false} className="jog-album-art" />}
+        </div>
         <div ref={markerRef} className="absolute inset-0 pointer-events-none will-change-transform"><span className="jog-position-marker" /></div>
       </div>
     </div>

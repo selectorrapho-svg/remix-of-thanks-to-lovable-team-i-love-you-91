@@ -1,6 +1,7 @@
 import { LIBRARY, type LibraryTrack } from '@/assets/library';
+import { readAlbumArt } from './albumArt';
 
-export type DeviceTrack = LibraryTrack & { file?: File; handle?: FileSystemFileHandle; kind?: 'audio' | 'video'; native?: boolean };
+export type DeviceTrack = LibraryTrack & { file?: File; handle?: FileSystemFileHandle; kind?: 'audio' | 'video'; native?: boolean; artworkUrl?: string | null };
 type DirectoryPicker = () => Promise<FileSystemDirectoryHandle>;
 const CACHE_KEY = 'mixrdjspro-library-directory';
 let tracks: DeviceTrack[] = [...LIBRARY];
@@ -12,18 +13,22 @@ const publish = () => { current = { tracks, queue, playlists }; listeners.forEac
 export const deviceLibrary = {
   subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
   snapshot() { return current; },
-  addFiles(files: File[]) {
+  async addFiles(files: File[]) {
     const next = files.filter(f => f.type.startsWith('audio/') || f.type.startsWith('video/') || /\.(mp3|aac|m4a|wav|flac|ogg|mp4|webm|mov)$/i.test(f.name))
-      .map(f => ({ title: f.name.replace(/\.[^.]+$/, ''), filename: f.name, url: '', file: f, kind: f.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(f.name) ? 'video' as const : 'audio' as const }));
+      .map(f => ({ title: f.name.replace(/\.[^.]+$/, ''), filename: f.name, url: '', file: f, kind: f.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(f.name) ? 'video' as const : 'audio' as const, artworkUrl: null }));
     tracks = [...next, ...tracks.filter(t => !next.some(n => n.filename === t.filename && t.file))]; publish();
+    await Promise.all(next.map(async (track) => {
+      if (track.kind === 'audio' && track.file) track.artworkUrl = await readAlbumArt(track.file);
+    }));
+    publish();
   },
   /** Android app: ask permission once, then list every song/video on the phone. */
   async scanNative() {
-    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; convertFileSrc?: (u: string) => string; Plugins?: { NativeMedia?: { scan(): Promise<{ items: { uri: string; title: string; filename: string; kind: 'audio' | 'video' }[] }> } } } }).Capacitor;
+    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; convertFileSrc?: (u: string) => string; Plugins?: { NativeMedia?: { scan(): Promise<{ items: { uri: string; title: string; filename: string; artworkUri?: string; kind: 'audio' | 'video' }[] }> } } } }).Capacitor;
     const media = cap?.isNativePlatform?.() ? cap.Plugins?.NativeMedia : undefined;
     if (!media) return false;
     const { items } = await media.scan();
-    const found: DeviceTrack[] = items.map(i => ({ title: i.title, filename: i.filename || i.uri, url: cap?.convertFileSrc ? cap.convertFileSrc(i.uri) : i.uri, kind: i.kind, native: true }));
+    const found: DeviceTrack[] = items.map(i => ({ title: i.title, filename: i.filename || i.uri, url: cap?.convertFileSrc ? cap.convertFileSrc(i.uri) : i.uri, artworkUrl: i.artworkUri && cap?.convertFileSrc ? cap.convertFileSrc(i.artworkUri) : i.artworkUri, kind: i.kind, native: true }));
     tracks = [...found, ...tracks.filter(t => !t.native)]; publish();
     return true;
   },
@@ -50,7 +55,8 @@ export const deviceLibrary = {
       for await (const item of dir.values()) {
         if (item.kind === 'directory') { await visit(item); continue; }
         if (!/\.(mp3|aac|m4a|wav|flac|ogg|mp4|webm|mov)$/i.test(item.name)) continue;
-        found.push({ title: item.name.replace(/\.[^.]+$/, ''), filename: item.name, url: '', handle: item, kind: /\.(mp4|webm|mov)$/i.test(item.name) ? 'video' : 'audio' });
+        const file = await item.getFile();
+        found.push({ title: item.name.replace(/\.[^.]+$/, ''), filename: item.name, url: '', handle: item, kind: /\.(mp4|webm|mov)$/i.test(item.name) ? 'video' : 'audio', artworkUrl: await readAlbumArt(file) });
       }
     }
     await visit(handle);

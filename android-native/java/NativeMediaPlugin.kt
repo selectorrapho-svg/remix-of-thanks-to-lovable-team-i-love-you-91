@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.ContentUris
 import android.os.Build
 import android.provider.MediaStore
+import android.net.Uri
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.PermissionState
@@ -60,8 +61,15 @@ class NativeMediaPlugin : Plugin() {
             val name = c.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
             val title = c.getColumnIndexOrThrow(MediaStore.MediaColumns.TITLE)
             while (c.moveToNext()) {
+                val mediaId = c.getLong(id)
+                val artworkUri = if (kind == "audio") {
+                    "content://media/external/audio/albumart/$mediaId"
+                } else {
+                    ContentUris.withAppendedId(base, mediaId).toString()
+                }
                 out.put(JSObject()
-                    .put("uri", ContentUris.withAppendedId(base, c.getLong(id)).toString())
+                    .put("uri", ContentUris.withAppendedId(base, mediaId).toString())
+                    .put("artworkUri", artworkUri)
                     .put("filename", c.getString(name) ?: "")
                     .put("title", c.getString(title) ?: c.getString(name) ?: "Untitled")
                     .put("kind", kind))

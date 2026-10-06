@@ -309,9 +309,10 @@ export class Deck {
   }
 
 
-  async loadUrl(url: string, name: string) {
+  async loadUrl(url: string, name: string, coverUrl: string | null = null) {
     this.pause();
     this.trackName = name;
+    this.coverUrl = coverUrl;
     this.videoEl?.pause();
     this.videoEl = null;
     const res = await fetch(url);
@@ -340,8 +341,10 @@ export class Deck {
     this.listeners.forEach((l) => l());
   }
 
-  async loadFile(file: File) {
+  async loadFile(file: File, coverUrl: string | null = null) {
     this.pause();
+    if (this.coverUrl?.startsWith("blob:") && this.coverUrl !== coverUrl) URL.revokeObjectURL(this.coverUrl);
+    this.coverUrl = coverUrl;
     this.videoEl?.pause();
     const isVideo = file.type.startsWith("video/") || /\.(mp4|webm|mov|m4v)$/i.test(file.name);
     this.trackName = file.name.replace(/\.[^.]+$/, "");

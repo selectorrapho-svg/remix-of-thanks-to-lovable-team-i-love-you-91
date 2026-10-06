@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { FolderOpen, Music2, Search, X, ChevronDown, MoreHorizontal, ListPlus, ListMusic, Play, Film, Sun, LoaderCircle, ArrowDownWideNarrow } from 'lucide-react';
+import { FolderOpen, Music2, Search, X, ChevronDown, MoreHorizontal, ListPlus, ListMusic, Play, Film, LoaderCircle, ArrowDownWideNarrow } from 'lucide-react';
 import { Deck, Mixer } from '@/lib/dj/engine';
 import { deviceLibrary, type DeviceTrack } from '@/lib/dj/deviceLibrary';
 import { Portal } from './Portal';
@@ -33,8 +33,8 @@ export function TrackLibraryOverlay({ open, onClose, deck, mixer }: { open: bool
     try {
       mixer?.resume();
       const file = await acquire(track);
-      if (file) await destination.loadFile(file);
-      else await destination.loadUrl(track.url, track.title);
+      if (file) await destination.loadFile(file, track.artworkUrl ?? null);
+      else await destination.loadUrl(track.url, track.title, track.artworkUrl ?? null);
       onClose();
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not load this track.'); }
     finally { setLoading(''); }
@@ -83,7 +83,7 @@ export function TrackLibraryOverlay({ open, onClose, deck, mixer }: { open: bool
       {error && <p role="status" className="px-4 py-2 text-sm text-primary">{error}</p>}
       <div className="min-h-0 flex-1 overflow-y-auto py-3">
         {visible.map((track, index) => <div key={`${track.filename}-${index}`} className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 border-b border-border/60 px-4 py-2">
-          <div className="grid size-14 place-items-center bg-secondary text-primary">{track.kind === 'video' ? <Film className="size-6" /> : <Music2 className="size-6" />}</div>
+          <div className="grid size-14 place-items-center overflow-hidden bg-secondary text-primary">{track.artworkUrl ? <img src={track.artworkUrl} alt={`${track.title} album cover`} className="size-full object-cover" /> : track.kind === 'video' ? <Film className="size-6" /> : <Music2 className="size-6" />}</div>
           <button className="min-w-0 text-left" onClick={() => load(track, mixer ? mixer.activeDecks().left.id : undefined)}><span className="block truncate text-sm font-semibold">{track.title}</span><span className="block truncate text-xs text-muted-foreground">{track.file || track.handle || track.native ? 'This device' : 'MixrdjsPro library'}</span></button>
           <div className="relative"><button className="grid size-9 place-items-center rounded-full bg-secondary" aria-label={`Options for ${track.title}`} onClick={() => setMenu(menu === track.filename ? null : track.filename)}><MoreHorizontal className="size-5" /></button>
             {menu === track.filename && <div className="absolute right-0 top-9 z-20 w-52 rounded-md border border-border bg-popover p-1 shadow-lg text-sm">
@@ -98,7 +98,7 @@ export function TrackLibraryOverlay({ open, onClose, deck, mixer }: { open: bool
         {!visible.length && <p className="px-4 py-8 text-center text-sm text-muted-foreground">No tracks here yet. Open a music folder or choose files.</p>}
       </div>
       <footer className="flex items-center justify-between border-t border-border bg-secondary px-4 py-3 text-xs text-muted-foreground"><span>{busy ? <LoaderCircle className="size-4 animate-spin" /> : `${visible.length} tracks`}</span><button className="flex items-center gap-2 text-primary" onClick={scan}><FolderOpen className="size-4" />Browse device</button></footer>
-      <input ref={files} type="file" accept="audio/*,video/*,.mp3,.aac,.m4a,.wav,.flac,.ogg,.mp4,.webm,.mov" multiple className="hidden" onChange={e => { deviceLibrary.addFiles(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
+      <input ref={files} type="file" accept="audio/*,video/*,.mp3,.aac,.m4a,.wav,.flac,.ogg,.mp4,.webm,.mov" multiple className="hidden" onChange={e => { void deviceLibrary.addFiles(Array.from(e.target.files ?? [])); e.target.value = ''; }} />
     </section>
   </div></Portal>;
 }

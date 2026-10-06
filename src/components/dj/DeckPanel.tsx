@@ -135,7 +135,7 @@ export function DeckPanel({ deck, side, compact }: Props) {
           </div>
         ) : (
           <div className="flex-1 min-h-0 flex items-center justify-center w-full py-1 landscape-jog-slot">
-            <JogWheel deck={deck} size={200} accent={accent} />
+            <JogWheel deck={deck} size={232} accent={accent} />
           </div>
         )}
 
