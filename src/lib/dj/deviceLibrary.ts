@@ -17,10 +17,7 @@ export const deviceLibrary = {
     const next: DeviceTrack[] = files.filter(f => f.type.startsWith('audio/') || f.type.startsWith('video/') || /\.(mp3|aac|m4a|wav|flac|ogg|mp4|webm|mov)$/i.test(f.name))
       .map(f => ({ title: f.name.replace(/\.[^.]+$/, ''), filename: f.name, url: '', file: f, kind: f.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(f.name) ? 'video' as const : 'audio' as const, artworkUrl: null }));
     tracks = [...next, ...tracks.filter(t => !next.some(n => n.filename === t.filename && t.file))]; publish();
-    await Promise.all(next.map(async (track) => {
-      if (track.kind === 'audio' && track.file) track.artworkUrl = await readAlbumArt(track.file);
-    }));
-    publish();
+    queueArtwork(next);
   },
   /** Android app: ask permission once, then list every song/video on the phone. */
   async scanNative() {
@@ -55,17 +52,49 @@ export const deviceLibrary = {
       for await (const item of dir.values()) {
         if (item.kind === 'directory') { await visit(item); continue; }
         if (!/\.(mp3|aac|m4a|wav|flac|ogg|mp4|webm|mov)$/i.test(item.name)) continue;
-        const file = await item.getFile();
-        found.push({ title: item.name.replace(/\.[^.]+$/, ''), filename: item.name, url: '', handle: item, kind: /\.(mp4|webm|mov)$/i.test(item.name) ? 'video' : 'audio', artworkUrl: await readAlbumArt(file) });
+        found.push({ title: item.name.replace(/\.[^.]+$/, ''), filename: item.name, url: '', handle: item, kind: /\.(mp4|webm|mov)$/i.test(item.name) ? 'video' : 'audio', artworkUrl: null });
+        // Show the list early while large folders are still being walked.
+        if (found.length % 200 === 0) { tracks = [...found, ...tracks.filter(t => !t.handle)]; publish(); await idle(); }
       }
     }
     await visit(handle);
     tracks = [...found, ...tracks.filter(t => !t.handle)]; publish();
+    queueArtwork(found);
   },
   addQueue(track: DeviceTrack) { queue = [...queue, track]; publish(); },
   addAllQueue(items: DeviceTrack[]) { queue = [...queue, ...items]; publish(); },
   addPlaylist(name: string, items: DeviceTrack[]) { playlists = { ...playlists, [name]: [...(playlists[name] ?? []), ...items] }; publish(); },
 };
+
+// Album art is read a couple of files at a time in idle moments so big
+// libraries never freeze the UI. Tracks without art simply stay blank.
+const idle = () => new Promise<void>(r => {
+  const ric = (globalThis as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+  if (ric) ric(() => r(), { timeout: 200 }); else setTimeout(r, 16);
+});
+let artQueue: DeviceTrack[] = [];
+let artRunning = false;
+function queueArtwork(items: DeviceTrack[]) {
+  artQueue.push(...items.filter(t => t.kind !== 'video' && !t.artworkUrl));
+  if (artRunning) return;
+  artRunning = true;
+  void (async () => {
+    let changed = 0;
+    while (artQueue.length) {
+      const batch = artQueue.splice(0, 2);
+      await Promise.all(batch.map(async t => {
+        try {
+          const file = t.file ?? (t.handle ? await t.handle.getFile() : undefined);
+          if (file && file.size < 60 * 1024 * 1024) t.artworkUrl = await readAlbumArt(file);
+          if (t.artworkUrl) changed++;
+        } catch { /* leave blank */ }
+      }));
+      if (changed >= 12 || !artQueue.length) { if (changed) publish(); changed = 0; }
+      await idle();
+    }
+    artRunning = false;
+  })();
+}
 
 // Store only a directory handle, not the user's actual media files.
 function db(): Promise<IDBDatabase> {
