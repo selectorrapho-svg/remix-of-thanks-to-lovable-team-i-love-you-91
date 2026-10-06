@@ -1,3 +1,16 @@
+# Task roadmap
+
+- [x] Accounts \& Pro: offline phone+name+password login, WhatsApp payment (0745260364, 150 KES/month), admin approve/cancel pop-up, 30-day unlock codes, 2 phones per account, admin all-features; Account tab + upgrade card with background image and rounded corners in Settings.
+- [x] Pro gating: custom video watermark, video recording and AI stems locked for free users; free keeps mixing and beat removal.
+- [ ] Stems UI: Drums/Bass/Harmonic/Vocals sliders panel opening from the deck stems button.
+- [ ] Mixer overview redesign: filter/EQ knobs, channel faders, segmented VU meters, reference crossfader with FX menu.
+- [ ] FX library UI (Audio/Visual/A-V/Favorites tabs), pad restyle, library menu and sorting.
+- [ ] Pre-cue button per deck with split-output cue mix where supported.
+- [ ] Offline recorder: video 360p-1080p + low-storage option, MP3/WAV audio, internal/mic/both sources.
+- [ ] Verify the whole flow in the preview after the APK-reported library hang and video fixes.
+
+---
+
 - [ ] Improve scratch sound and video playback/synchronization; verify native behavior on Android hardware.
 - [x] Make upright spectrum waveforms and reference-inspired landscape controls/crossfader.
 - [ ] Share one mobile library across all four decks, support device music/video access, queue, playlists, and track analysis.

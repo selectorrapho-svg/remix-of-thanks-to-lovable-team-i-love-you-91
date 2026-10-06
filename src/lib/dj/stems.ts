@@ -1,7 +1,8 @@
 // Real AI stem separation using demucs-rs (Apache-2.0, HTDemucs v4) compiled
 // to WebAssembly + WebGPU. Runs in a background worker; the deck keeps its
-// frequency-band stems until the separated stems are ready.
+// frequency-band stems until the separated stems are ready. Pro feature only.
 import wasmAsset from "@/assets/wasm/demucs_wasm_bg.wasm.asset.json";
+import { isPro } from "@/lib/dj/license";
 import type { StemKey } from "./engine";
 
 const MODEL_ID = "htdemucs";
@@ -74,7 +75,7 @@ async function loadModel(): Promise<Uint8Array> {
 
 /** Separate a decoded track into drums/bass/other/vocals. Resolves null when unsupported. */
 export function separateStems(buffer: AudioBuffer): Promise<StemResult | null> {
-  if (!stemsSupported() || buffer.numberOfChannels > 2) return Promise.resolve(null);
+  if (!stemsSupported() || !isPro() || buffer.numberOfChannels > 2) return Promise.resolve(null);
   const job = queue.then(async () => {
     await ensureWorker();
     modelBytes ??= loadModel().catch((e) => { modelBytes = null; throw e; });
