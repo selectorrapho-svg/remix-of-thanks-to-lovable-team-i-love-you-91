@@ -192,7 +192,6 @@ export function DeckFxPanel({
               </div>
               <div
                   ref={padRef}
-                  style={{ opacity: padOn ? 1 : 0.35 }}
                   onPointerDown={(e) => {
                     if (!padOn) return;
                     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -207,6 +206,7 @@ export function DeckFxPanel({
                   }}
                   className="relative rounded-xl overflow-hidden select-none"
                   style={{
+                    opacity: padOn ? 1 : 0.35,
                     height: compact ? 150 : 200,
                     touchAction: "none",
                     background:
