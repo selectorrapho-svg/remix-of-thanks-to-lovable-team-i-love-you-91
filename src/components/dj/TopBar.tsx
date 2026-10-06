@@ -51,7 +51,7 @@ function TopTrack({ deck, side }: { deck: Deck; side: "left" | "right" }) {
 
 export function TopBar({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
   return (
-    <div className="relative flex items-center h-14 border-b border-white/8 bg-background/40 backdrop-blur-2xl">
+    <div className="relative flex items-center h-11 border-b border-white/8 bg-background/40 backdrop-blur-2xl">
       <TopTrack deck={deckA} side="left" />
       <div className="w-px h-10 bg-white/10" />
       <TopTrack deck={deckB} side="right" />
