@@ -16,9 +16,6 @@ import { LevelMeter } from "./LevelMeter";
 import { Minus, Maximize2 } from "lucide-react";
 
 type CenterView = "mixer" | "wave" | "pads" | "samples";
-// In video mode the "Mixer" slot becomes "Samples" and its pads sit at the
-// bottom of the center column.
-const centerLabel = { mixer: "Mixer", wave: "Waveforms", pads: "Hot cues", samples: "Samples" } as const;
 
 const EQ_BANDS = ["high", "mid", "low"] as const;
 
@@ -27,6 +24,7 @@ export function CenterColumn({ deckA, deckB, mixer, videoMode = false }: { deckA
   useDeck(deckB);
   const hasVideo = !!deckA.videoEl || !!deckB.videoEl;
   const [view, setView] = useState<CenterView | null>(null);
+  const [cut, setCut] = useState(false);
   const [djs] = useDjSettings();
   const vertical = djs.waveOrientation !== "horizontal";
 
