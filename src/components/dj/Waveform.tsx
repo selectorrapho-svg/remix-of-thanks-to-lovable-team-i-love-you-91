@@ -1,0 +1,254 @@
+import { useEffect, useRef, useState } from "react";
+import { Deck, computeBandedPeaks, BandedPeaks } from "@/lib/dj/engine";
+import { stemBands, smoothAt, BAND_STEM } from "@/lib/dj/wavedraw";
+import { ZoomIn, ZoomOut } from "lucide-react";
+import { useWaveScratch } from "@/lib/dj/useWaveScratch";
+
+
+interface Props {
+  deck: Deck;
+  color: string;
+  side: "left" | "right";
+}
+
+// Vertical scrolling stem waveform — smooth interpolated RGB envelopes.
+// Future scrolls in from bottom → past drifts to top.
+export function Waveform({ deck, side }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const peaksRef = useRef<BandedPeaks | null>(null);
+  const rafRef = useRef(0);
+  const [zoom, setZoom] = useState(1);
+
+  useEffect(() => {
+    if (!deck.buffer) {
+      peaksRef.current = null;
+      return;
+    }
+    peaksRef.current = computeBandedPeaks(deck.buffer, 16000);
+  }, [deck.buffer]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext("2d")!;
+    const dpr = window.devicePixelRatio || 1;
+    const resize = () => {
+      const w = canvas.clientWidth * dpr;
+      const h = canvas.clientHeight * dpr;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+    };
+
+    const draw = () => {
+      resize();
+      const W = canvas.width;
+      const H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      const centerY = H / 2;
+      const secondsVisible = 8 / zoom;
+      const pxPerSec = H / secondsVisible;
+      const peaks = peaksRef.current;
+      const dur = deck.duration;
+      const t = deck.currentTime;
+
+      const cx = W / 2;
+      const halfW = W * 0.48;
+      const step = Math.max(1, Math.floor(dpr));
+
+      if (peaks && dur > 0) {
+        const samples = peaks.overall.length;
+        const secsPerBin = dur / samples;
+
+        ctx.globalCompositeOperation = "lighter";
+        for (const [key, col, scale] of stemBands()) {
+          if (!deck.stems[BAND_STEM[key as string]].on) continue;
+          const arr = peaks[key] as Float32Array;
+          ctx.beginPath();
+          for (let y = 0; y <= H; y += step) {
+            const timeAt = t + (y - centerY) / pxPerSec;
+            const v = smoothAt(arr, timeAt / secsPerBin) * halfW * scale;
+            ctx.lineTo(cx - v, y);
+          }
+          for (let y = H; y >= 0; y -= step) {
+            const timeAt = t + (y - centerY) / pxPerSec;
+            const v = smoothAt(arr, timeAt / secsPerBin) * halfW * scale;
+            ctx.lineTo(cx + v, y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = col;
+          ctx.globalAlpha = 0.85;
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = "source-over";
+
+        // dim the already-played half (above the playhead)
+        ctx.fillStyle = "rgba(0,0,0,0.45)";
+        ctx.fillRect(0, 0, W, centerY);
+      }
+
+      // beat grid
+      if (deck.bpm && deck.bpm > 40 && dur > 0) {
+        const secPerBeat = 60 / deck.bpm;
+        const firstBeat = Math.floor((t - secondsVisible / 2) / secPerBeat);
+        const lastBeat = Math.ceil((t + secondsVisible / 2) / secPerBeat);
+        for (let bi = firstBeat; bi <= lastBeat; bi++) {
+          const y = centerY + (bi * secPerBeat - t) * pxPerSec;
+          const isDown = bi % 4 === 0;
+          ctx.fillStyle = isDown ? "rgba(255,255,255,0.32)" : "rgba(255,255,255,0.09)";
+          ctx.fillRect(0, y, W, 1);
+          if (isDown) {
+            ctx.fillStyle = "rgba(255,255,255,0.55)";
+            ctx.font = `${9 * dpr}px ui-sans-serif`;
+            ctx.fillText(String(Math.max(1, Math.floor(bi / 4) + 1)), 3, y - 2);
+          }
+        }
+      }
+
+      // loop region highlight
+      if (deck.loopActive && deck.loopStart != null && deck.loopEnd != null) {
+        const y1 = centerY + (deck.loopStart - t) * pxPerSec;
+        const y2 = centerY + (deck.loopEnd - t) * pxPerSec;
+        ctx.fillStyle = "rgba(60,220,140,0.14)";
+        ctx.fillRect(0, Math.min(y1, y2), W, Math.abs(y2 - y1));
+        ctx.fillStyle = "rgba(60,220,140,0.8)";
+        ctx.fillRect(0, y1, W, 1);
+        ctx.fillRect(0, y2, W, 1);
+      }
+
+      // playhead
+      ctx.fillStyle = "#ff3b3b";
+      ctx.fillRect(0, centerY - 1, W, 2);
+
+      // hot cue triangles
+      deck.hotCues.forEach((c, i) => {
+        if (!c) return;
+        const y = centerY + (c.time - t) * pxPerSec;
+        if (y < -10 || y > H + 10) return;
+        ctx.fillStyle = ["#ff3b3b", "#ffcf3b", "#3bff8a", "#3bd2ff", "#a83bff", "#ff3bd2", "#ffffff", "#ff7a3b"][i];
+        ctx.beginPath();
+        if (side === "left") {
+          ctx.moveTo(0, y - 7);
+          ctx.lineTo(12, y);
+          ctx.lineTo(0, y + 7);
+        } else {
+          ctx.moveTo(W, y - 7);
+          ctx.lineTo(W - 12, y);
+          ctx.lineTo(W, y + 7);
+        }
+        ctx.closePath();
+        ctx.fill();
+      });
+    };
+
+    const loop = () => {
+      draw();
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [deck, side, zoom]);
+
+  const scratch = useWaveScratch(deck, "y", () => {
+    const h = canvasRef.current?.clientHeight ?? 1;
+    return h / (8 / zoom);
+  });
+
+  return (
+    <div className="relative w-full h-full" style={{ touchAction: "none" }} {...scratch}>
+      <canvas ref={canvasRef} className="w-full h-full block" style={{ background: "#050505" }} />
+
+      <div className={`absolute ${side === "left" ? "right-1" : "left-1"} top-1 flex flex-col gap-1`}>
+        <button
+          onClick={() => setZoom((z) => Math.min(4, z * 1.4))}
+          className="w-6 h-6 rounded-md bg-white/10 border border-white/15 backdrop-blur-xl text-muted-foreground hover:text-foreground flex items-center justify-center"
+          title="Zoom in"
+        >
+          <ZoomIn className="w-3 h-3" />
+        </button>
+        <button
+          onClick={() => setZoom((z) => Math.max(0.25, z / 1.4))}
+          className="w-6 h-6 rounded-md bg-white/10 border border-white/15 backdrop-blur-xl text-muted-foreground hover:text-foreground flex items-center justify-center"
+          title="Zoom out"
+        >
+          <ZoomOut className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Compact horizontal track-overview waveform for the top bar (RGB stems).
+export function TrackOverview({ deck, accent }: { deck: Deck; accent: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const peaksRef = useRef<BandedPeaks | null>(null);
+  const rafRef = useRef(0);
+
+  useEffect(() => {
+    if (!deck.buffer) {
+      peaksRef.current = null;
+      return;
+    }
+    peaksRef.current = computeBandedPeaks(deck.buffer, 800);
+  }, [deck.buffer]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext("2d")!;
+    const dpr = window.devicePixelRatio || 1;
+    const draw = () => {
+      const w = canvas.clientWidth * dpr;
+      const h = canvas.clientHeight * dpr;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+      ctx.clearRect(0, 0, w, h);
+      const peaks = peaksRef.current;
+      const cy = h / 2;
+      if (!peaks) {
+        ctx.fillStyle = "rgba(255,255,255,0.05)";
+        ctx.fillRect(0, cy - 1, w, 2);
+        return;
+      }
+      const n = peaks.overall.length;
+      ctx.globalCompositeOperation = "lighter";
+      for (const [key, col, scale] of stemBands()) {
+        const arr = peaks[key] as Float32Array;
+        ctx.beginPath();
+        for (let x = 0; x <= w; x++) {
+          const v = smoothAt(arr, (x / w) * (n - 1)) * cy * scale;
+          ctx.lineTo(x, cy - v);
+        }
+        for (let x = w; x >= 0; x--) {
+          const v = smoothAt(arr, (x / w) * (n - 1)) * cy * scale;
+          ctx.lineTo(x, cy + v);
+        }
+        ctx.closePath();
+        ctx.fillStyle = col;
+        ctx.globalAlpha = 0.85;
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+      const p = deck.duration ? deck.currentTime / deck.duration : 0;
+      ctx.fillStyle = accent;
+      ctx.fillRect(p * w - 1, 0, 2, h);
+      deck.hotCues.forEach((c, i) => {
+        if (!c || !deck.duration) return;
+        const cx = (c.time / deck.duration) * w;
+        ctx.fillStyle = ["#ff3b3b", "#ffcf3b", "#3bff8a", "#3bd2ff", "#a83bff", "#ff3bd2", "#ffffff", "#ff7a3b"][i];
+        ctx.fillRect(cx, 0, 1, h);
+      });
+    };
+    const loop = () => {
+      draw();
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [deck, accent]);
+
+  return <canvas ref={canvasRef} className="w-full h-full block" />;
+}

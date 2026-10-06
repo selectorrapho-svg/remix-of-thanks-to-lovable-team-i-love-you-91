@@ -1,0 +1,8 @@
+- [ ] Improve scratch sound and video playback/synchronization; verify native behavior on Android hardware.
+- [ ] Make upright spectrum waveforms and reference-inspired landscape controls/crossfader.
+- [ ] Share one mobile library across all four decks, support device music/video access, queue, playlists, and track analysis.
+- [ ] Verify loaded-track playback and mobile layouts; document native platform limitations honestly.
+- [ ] Match the uploaded portrait top/bottom deck controls, vinyl views, waveform/pads tabs, and combine landscape performance tools; verify both orientations.
+- [ ] Activate portrait cue/retrigger, replace vinyl artwork with supplied jog parts, and fit landscape transport/crossfader.
+- [ ] Add library sorting/files view, reference-style FX/sampler grids, and adjustable FX beats.
+- [ ] Add floating master/A/B video monitors and 100+ functional transition/VFX presets; verify browser playback and scratch path.
