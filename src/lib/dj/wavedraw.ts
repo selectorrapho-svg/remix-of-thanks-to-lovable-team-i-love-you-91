@@ -1,21 +1,17 @@
 import { BandedPeaks } from "./engine";
 
-// djay Pro (Algoriddim) two-tone palette (matches the reference screenshots):
-//  · sub + bass + low-mid → wide BLUE body (kick, bassline, drum body)
-//  · mid + presence + high → spiky RED transient layer on top (vocals, snare, hats)
-// Order matters: widest band first so the red spikes layer on top additively.
+// Frequency-coded RGB: bass red, mids green, treble blue.
 const RGB_BANDS: [keyof BandedPeaks, string, number][] = [
-  ["sub", "rgb(28,108,255)", 1.95],      // kick / sub — deep blue body
-  ["bass", "rgb(48,140,255)", 1.62],     // bassline — blue body
-  ["lowMid", "rgb(76,186,255)", 1.34],   // snare / body — light blue body
-  ["mid", "rgb(255,44,38)", 1.12],       // vocals / lead — red spikes
-  ["presence", "rgb(255,86,48)", 0.98],  // harmonics — red-orange spikes
-  ["high", "rgb(255,132,60)", 0.86],     // hi-hats / air — amber-red spikes
+  ["sub", "rgb(240,48,56)", 1.5],
+  ["bass", "rgb(255,88,65)", 1.35],
+  ["lowMid", "rgb(80,210,88)", 1.2],
+  ["mid", "rgb(48,240,140)", 1.12],
+  ["presence", "rgb(50,160,255)", 1.0],
+  ["high", "rgb(85,100,255)", 0.95],
 ];
 
-
 export const WAVE_COLORS: { key: string; label: string; rgb: [number, number, number] | null }[] = [
-  { key: "all", label: "All colours (RGB)", rgb: null },
+  { key: "all", label: "RGB frequency spectrum", rgb: null },
   { key: "red", label: "Red", rgb: [255, 48, 48] },
   { key: "green", label: "Green", rgb: [40, 230, 90] },
   { key: "blue", label: "Blue", rgb: [40, 110, 255] },
@@ -46,8 +42,8 @@ export function stemBands(): [keyof BandedPeaks, string, number][] {
 export function smoothAt(arr: Float32Array, pos: number): number {
   const n = arr.length;
   if (n === 0) return 0;
-  if (pos <= 0) return arr[0];
-  if (pos >= n - 1) return arr[n - 1];
+  if (pos < 0 || pos > n - 1) return 0;
+  if (pos === n - 1) return arr[n - 1];
   const i = Math.floor(pos);
   const t = pos - i;
   const p0 = arr[Math.max(0, i - 1)];

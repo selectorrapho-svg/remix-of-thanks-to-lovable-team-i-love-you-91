@@ -15,6 +15,7 @@ import diamondArm from "@/assets/jogs/diamond_skin_tete_de_lecture_left.webp.ass
 import goldArm from "@/assets/jogs/gold_skin_tete_de_lecture.webp.asset.json";
 import neonArm from "@/assets/jogs/neon_skin_tete_de_lecture.jpg.asset.json";
 import unloadedJog from "@/assets/jogs/jog-unloaded.png.asset.json";
+import raneJog from "@/assets/jogs/rane-inspired.png";
 import loadedJog from "@/assets/jogs/jog-loaded.png.asset.json";
 
 const JOG_BG: Record<string, string> = {
@@ -41,6 +42,7 @@ const JOG_IMAGE: Record<string, string | undefined> = {
   pioneer3d: jogPioneer,
   neonDisc: jogNeonDisc,
   neonDisc3d: jogNeonDisc,
+  rane: raneJog,
 };
 // 3D variants keep the same skin art but add sculpted gloss + depth shading.
 const JOG_3D = new Set(["pioneer3d", "neonDisc3d"]);
@@ -55,7 +57,7 @@ const JOG_IMAGE_FALLBACK = jogNeonDisc;
 export function JogWheel({ deck, size, accent }: Props) {
   const [s] = useDjSettings();
   const ref = useRef<HTMLDivElement>(null);
-  const markerRef = useRef<HTMLDivElement>(null);
+  
   const ringRef = useRef<HTMLDivElement>(null);
   const last = useRef({ angle: 0, t: 0, scratching: false });
   const rotRef = useRef(0);
@@ -104,7 +106,7 @@ export function JogWheel({ deck, size, accent }: Props) {
         rotRef.current = (rotRef.current + dt * rps * 360) % 360;
       }
       const r = `rotate(${rotRef.current}deg)`;
-      if (markerRef.current) markerRef.current.style.transform = r;
+
       if (ringRef.current) ringRef.current.style.transform = r;
       raf = requestAnimationFrame(loop);
     };
@@ -211,11 +213,12 @@ export function JogWheel({ deck, size, accent }: Props) {
   return (
     <div className="reference-jog" style={{ width: size, maxWidth: "100%" }}>
       <div ref={ref} data-loaded={loaded} role="slider" aria-label={`Scratch deck ${deck.id}`} aria-valuemin={0} aria-valuemax={deck.duration} aria-valuenow={deck.currentTime} className="relative aspect-square w-full touch-none select-none">
-        <div ref={ringRef} className="absolute inset-0 pointer-events-none will-change-transform">
-          <img src={loaded ? loadedJog.url : unloadedJog.url} alt={loaded ? "Loaded silver jogwheel" : "Empty dark jogwheel"} draggable={false} className="size-full rounded-full object-contain" />
+        <div ref={ringRef} data-skin={s.jogStyle} className={`jog-skin absolute inset-0 pointer-events-none will-change-transform rounded-full ${is3d ? "jog-depth" : ""}`}>
+          {skin ? <img src={skin} alt={`${s.jogStyle} jogwheel`} width={1024} height={1024} loading="lazy" draggable={false} className="size-full rounded-full object-contain" /> : s.jogStyle === "silver" ? <img src={loaded ? loadedJog.url : unloadedJog.url} alt={loaded ? "Loaded silver jogwheel" : "Empty dark jogwheel"} draggable={false} className="size-full rounded-full object-contain" /> : <><div className="jog-grooves" /><div className="jog-label" /></>}
+          {isVinyl && <img src={arm} alt="" draggable={false} className="jog-tonearm" />}
           {loaded && deck.coverUrl && <img src={deck.coverUrl} alt="" draggable={false} className="jog-album-art" />}
         </div>
-        <div ref={markerRef} className="absolute inset-0 pointer-events-none will-change-transform"><span className="jog-position-marker" /></div>
+
       </div>
     </div>
   );

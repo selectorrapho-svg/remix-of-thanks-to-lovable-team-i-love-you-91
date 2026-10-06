@@ -134,7 +134,8 @@ function MasterStage({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
       if (!rv.requestVideoFrameCallback) return;
       const tick = () => {
         dirty = true;
-        watched.set(v, rv.requestVideoFrameCallback!(tick));
+        const request = rv.requestVideoFrameCallback;
+        if (request) watched.set(v, request.call(v, tick));
       };
       watched.set(v, rv.requestVideoFrameCallback(tick));
     };
@@ -214,8 +215,8 @@ function MasterStage({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
 
   return (
     <div
-      className="relative overflow-hidden rounded-xl dj-panel bg-black"
-      style={{ aspectRatio: "16/9", boxShadow: "0 18px 40px rgba(0,0,0,0.6)" }}
+      className="relative overflow-hidden rounded-md dj-panel bg-background"
+      style={{ aspectRatio: "16/9" }}
     >
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       {/* live video elements kept in the DOM (invisible) so frames keep decoding */}
@@ -232,13 +233,13 @@ function MasterStage({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
   );
 }
 
-export function VideoMixStage({ deckA, deckB }: { deckA: Deck; deckB: Deck }) {
+export function VideoMixStage({ deckA, deckB, embedded = false }: { deckA: Deck; deckB: Deck; embedded?: boolean }) {
   const [s, setS] = useDjSettings();
   const [pos, setPos] = useState({ x: 24, y: 70 });
   const drag = useRef<{ dx: number; dy: number } | null>(null);
   const scale = s.videoScale;
 
-  if (!s.floatingVideo) {
+  if (embedded || !s.floatingVideo) {
     return (
       <div className="mx-auto w-full" style={{ maxWidth: 320 * scale }}>
         <MasterStage deckA={deckA} deckB={deckB} />

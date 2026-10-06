@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 export type JogStyle =
+  | "rane"
   | "silver"
   | "black"
   | "neon"
@@ -19,6 +20,7 @@ export type JogStyle =
   | "neonVinyl";
 
 export const JOG_STYLES: { key: JogStyle; label: string }[] = [
+  { key: "rane", label: "Rane inspired" },
   { key: "silver", label: "Silver" },
   { key: "black", label: "Black" },
   { key: "neon", label: "Neon" },
@@ -75,6 +77,8 @@ export interface DjSettings {
   waveColor: string;
   waveOrientation: "vertical" | "horizontal";
   brakeOnPause: boolean;
+  waveHighContrast: boolean;
+  waveScratch: boolean;
 }
 const KEY = "mixrdjs.settings.v1";
 const DEFAULT: DjSettings = {
@@ -91,6 +95,8 @@ const DEFAULT: DjSettings = {
   waveColor: "all",
   waveOrientation: "vertical",
   brakeOnPause: false,
+  waveHighContrast: false,
+  waveScratch: true,
 };
 
 const listeners = new Set<() => void>();
