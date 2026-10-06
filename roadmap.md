@@ -1,5 +1,15 @@
 # Task roadmap
 
+## Current request
+- [ ] Fix the S-button stems panel and verify its four audio sliders.
+- [ ] Add silver-only seek needle, finish diamond/gold vinyl skins and extended jog options.
+- [ ] Add splash Next → payment/login/Skip using the supplied mix4deejays logo.
+- [ ] Move Cut to Settings and consolidate performance FX controls.
+- [ ] Replace floating FX library with a large high-contrast load-effect browser.
+- [ ] Add video preset browser: 70+ VFX, 50+ transitions, TV simulation and 3D box.
+- [ ] Match portrait transport/pads/FX references and A/B/Mix visibility; compact dropdowns.
+- [ ] Verify requested controls in the preview; identify Android-only checks.
+
 - [x] Accounts \& Pro: offline phone+name+password login, WhatsApp payment (0745260364, 150 KES/month), admin approve/cancel pop-up, 30-day unlock codes, 2 phones per account, admin all-features; Account tab + upgrade card with background image and rounded corners in Settings.
 - [x] Pro gating: custom video watermark, video recording and AI stems locked for free users; free keeps mixing and beat removal.
 - [ ] Stems UI: Drums/Bass/Harmonic/Vocals sliders panel opening from the deck stems button.
