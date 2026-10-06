@@ -9,10 +9,13 @@ export function SamplerPanel({
   mixer,
   side = "left",
   deckLabel,
+  inline = false,
 }: {
   mixer: Mixer | null;
   side?: "left" | "right";
   deckLabel?: string;
+  /** Render a compact pad bank embedded in the page (video-mode Samples view). */
+  inline?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [packId, setPackId] = useState("sfx");
@@ -36,6 +39,41 @@ export function SamplerPanel({
     setHit(i);
     window.setTimeout(() => setHit((h) => (h === i ? null : h)), 180);
   };
+
+  if (inline) {
+    return (
+      <div className="w-full">
+        <div className="mb-1 flex items-center gap-1 text-[10px]">
+          <div className="relative flex-1">
+            <button onClick={() => setMenu((m) => !m)} className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary px-2 py-1">
+              <span className="truncate">{pack.name} <span className="text-muted-foreground">({pack.samples.length})</span></span>
+              <ChevronDown className="w-3 h-3" />
+            </button>
+            {menu && (
+              <div className="absolute left-0 right-0 top-7 z-10 rounded-lg border border-border bg-popover p-1 shadow-lg">
+                {packs.map((p) => (
+                  <button key={p.id} onClick={() => { setPackId(p.id); setPage(0); setMenu(false); }} className={`block w-full rounded px-2 py-1 text-left ${p.id === pack.id ? "text-primary" : ""}`}>
+                    {p.name} <span className="text-muted-foreground">({p.samples.length})</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button onClick={() => fileRef.current?.click()} className="rounded-lg border border-border bg-secondary p-1" aria-label="Add samples"><Plus className="w-3 h-3" /></button>
+          <input ref={fileRef} type="file" accept="audio/*" multiple className="hidden"
+            onChange={(e) => { const f = Array.from(e.target.files ?? []); e.target.value = ""; void sampleLibrary.add(f).then(() => { setPackId("mine"); setPage(0); }); }} />
+        </div>
+        <div className="sampler-grid grid grid-cols-8 gap-1">
+          {pads.map((p, i) => (
+            <Button variant="ghost" key={i} disabled={!p} onPointerDown={() => p && trigger(p, i)}
+              data-active={hit === i} className={`performance-pad pad-tone-${i % 4} h-auto px-0.5 py-1 text-[8px] font-medium uppercase disabled:opacity-30`}>
+              {p?.label ?? i + 1}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
