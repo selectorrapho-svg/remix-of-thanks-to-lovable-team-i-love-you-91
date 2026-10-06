@@ -590,6 +590,27 @@ export class Deck {
     if (c) this.seek(c.time);
   }
 
+  /** Play a hot cue with a temporary pitch offset (%) — video-mode Pitch Cue pads. */
+  triggerPitchCue(i: number, pct: number) {
+    const c = this.hotCues[i];
+    if (!c) return;
+    this.setPitchRaw(Math.max(-50, Math.min(50, pct)));
+    this.seek(c.time);
+    this.play();
+    this.emit();
+  }
+
+  /** Jump forward (positive) or back (negative) by whole beats on the grid. */
+  skipBeats(beats: number) {
+    if (!this.buffer && !this.videoEl) return;
+    const beat = 60 / (this.bpm || 120);
+    const t = this.currentTime;
+    const target = this.firstBeat > 0
+      ? this.firstBeat + Math.round((t - this.firstBeat) / beat + beats) * beat
+      : t + beats * beat;
+    this.seek(Math.max(0, Math.min(this.duration, target)));
+  }
+
   setPitch(p: number) {
     this.pitch = p;
     this.rate = 1 + p / 100;
