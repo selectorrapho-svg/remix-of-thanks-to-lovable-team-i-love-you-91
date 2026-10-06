@@ -14,7 +14,7 @@ export const deviceLibrary = {
   subscribe(fn: () => void) { listeners.add(fn); return () => { listeners.delete(fn); }; },
   snapshot() { return current; },
   async addFiles(files: File[]) {
-    const next = files.filter(f => f.type.startsWith('audio/') || f.type.startsWith('video/') || /\.(mp3|aac|m4a|wav|flac|ogg|mp4|webm|mov)$/i.test(f.name))
+    const next: DeviceTrack[] = files.filter(f => f.type.startsWith('audio/') || f.type.startsWith('video/') || /\.(mp3|aac|m4a|wav|flac|ogg|mp4|webm|mov)$/i.test(f.name))
       .map(f => ({ title: f.name.replace(/\.[^.]+$/, ''), filename: f.name, url: '', file: f, kind: f.type.startsWith('video/') || /\.(mp4|webm|mov)$/i.test(f.name) ? 'video' as const : 'audio' as const, artworkUrl: null }));
     tracks = [...next, ...tracks.filter(t => !next.some(n => n.filename === t.filename && t.file))]; publish();
     await Promise.all(next.map(async (track) => {
