@@ -9,7 +9,7 @@ import { connectMidi, subscribeMidi, MidiInfo } from "@/lib/dj/midi";
 import { Portal } from "./Portal";
 import { Button } from "@/components/ui/button";
 import { AccountPanel } from "./AccountPanel";
-import { isPro } from "@/lib/dj/license";
+import { isPro, whatsappPayUrl } from "@/lib/dj/license";
 import settingsArtwork from "@/assets/djogwheels-splash-clean.jpg";
 import brandLogo from "@/assets/djogwheels-user-logo-cropped.png";
 import {
@@ -123,7 +123,7 @@ export function SettingsPanel({
                       <li>• Real AI stems separation</li>
                     </ul>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <a href={lic.waUrl()} target="_blank" rel="noreferrer"><Button>Pay on WhatsApp</Button></a>
+                      <a href={whatsappPayUrl()} target="_blank" rel="noreferrer"><Button>Pay on WhatsApp</Button></a>
                       <Button variant="outline" onClick={() => setPage("account")}>Account & unlock code</Button>
                     </div>
                   </div>
@@ -189,11 +189,11 @@ export function SettingsPanel({
                   }}
                 />
                 <Tile
-                  label={recording ? "Stop" : "Rec"}
+                  label={recording ? "Stop" : isPro() ? "Rec" : "Rec 🔒"}
                   color="#ff3b3b"
                   on={recording}
                   icon={<Circle className="w-5 h-5" fill={recording ? "#ff3b3b" : "transparent"} />}
-                  onClick={toggleRecord}
+                  onClick={isPro() ? toggleRecord : () => setPage("account")}
                 />
               </div>
             </Section>
@@ -291,7 +291,8 @@ export function SettingsPanel({
             </Section>
 
 
-            <Section title="Video Watermark (Pro)">
+            <Section title={isPro() ? "Video Watermark (Pro)" : "Video Watermark (Pro — upgrade to use your own)"}>
+              {isPro() ? (<>
               <label className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                 Show watermark
                 <input
@@ -307,6 +308,9 @@ export function SettingsPanel({
                 placeholder="Custom watermark"
                 className="w-full rounded-sm border border-border bg-secondary px-2 py-1.5 text-xs"
               />
+              </>) : (
+                <p className="text-xs text-muted-foreground">Free version uses the DjogPro logo. Unlock PRO to add your own logo.</p>
+              )}
             </Section>
 
             <Section title="Scratch">
