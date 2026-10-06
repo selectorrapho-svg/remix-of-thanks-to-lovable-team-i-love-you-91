@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Deck, computeBandedPeaks, BandedPeaks } from "@/lib/dj/engine";
 import { stemBands, smoothAt, BAND_STEM } from "@/lib/dj/wavedraw";
 import { ZoomIn, ZoomOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useDjSettings } from "@/hooks/useDjSettings";
 import { useWaveScratch } from "@/lib/dj/useWaveScratch";
 
 
@@ -18,6 +20,7 @@ export function Waveform({ deck, side }: Props) {
   const peaksRef = useRef<BandedPeaks | null>(null);
   const rafRef = useRef(0);
   const [zoom, setZoom] = useState(1);
+  const [settings] = useDjSettings();
 
   useEffect(() => {
     if (!deck.buffer) {
@@ -28,8 +31,10 @@ export function Waveform({ deck, side }: Props) {
   }, [deck.buffer]);
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
     const resize = () => {
       const w = canvas.clientWidth * dpr;
@@ -156,24 +161,26 @@ export function Waveform({ deck, side }: Props) {
   });
 
   return (
-    <div className="relative w-full h-full overflow-hidden" style={{ touchAction: "none" }} {...scratch}>
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" style={{ background: "#050505" }} />
+    <div className={`relative w-full h-full overflow-hidden bg-background ${settings.waveHighContrast ? "wave-high-contrast" : ""}`} style={{ touchAction: "none" }} {...(settings.waveScratch ? scratch : {})}>
+      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block"  />
 
       <div className={`absolute ${side === "left" ? "right-1" : "left-1"} top-1 flex flex-col gap-1`}>
-        <button
+        <Button variant="ghost"
+          onPointerDown={event => event.stopPropagation()}
           onClick={() => setZoom((z) => Math.min(4, z * 1.4))}
-          className="w-6 h-6 rounded-md bg-white/10 border border-white/15 backdrop-blur-xl text-muted-foreground hover:text-foreground flex items-center justify-center"
+          className="dj-glass size-6 p-0 rounded-md text-muted-foreground hover:text-foreground"
           title="Zoom in"
         >
           <ZoomIn className="w-3 h-3" />
-        </button>
-        <button
+        </Button>
+        <Button variant="ghost"
+          onPointerDown={event => event.stopPropagation()}
           onClick={() => setZoom((z) => Math.max(0.25, z / 1.4))}
-          className="w-6 h-6 rounded-md bg-white/10 border border-white/15 backdrop-blur-xl text-muted-foreground hover:text-foreground flex items-center justify-center"
+          className="dj-glass size-6 p-0 rounded-md text-muted-foreground hover:text-foreground"
           title="Zoom out"
         >
           <ZoomOut className="w-3 h-3" />
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -194,8 +201,10 @@ export function TrackOverview({ deck, accent }: { deck: Deck; accent: string }) 
   }, [deck.buffer]);
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
     const draw = () => {
       const w = canvas.clientWidth * dpr;

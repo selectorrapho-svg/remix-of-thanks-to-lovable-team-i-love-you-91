@@ -41,6 +41,7 @@ export function CenterColumn({ deckA, deckB, mixer, videoMode = false }: { deckA
         <ViewButton active={view === "pads"} onClick={() => setView(current => current === "pads" ? null : "pads")} label="Hot cues">
           <Grid3x3 className="w-4 h-4" />
         </ViewButton>
+        {view === "wave" && <WaveformOptions />}
       </div>
 
       <div className={`${view ? "flex-1" : videoMode ? "hidden" : "flex-1"} min-h-0 border-b border-border`}>
@@ -52,7 +53,7 @@ export function CenterColumn({ deckA, deckB, mixer, videoMode = false }: { deckA
             </>)}
             {vertical && (<>
             <div className="relative flex-1 min-w-0">
-              <div className="absolute top-0 left-0 z-20"><WaveformOptions /></div><Waveform deck={deckA} side="left" color="#ff8a3b" />
+              <Waveform deck={deckA} side="left" color="#ff8a3b" />
             </div>
             <div className="flex-1 min-w-0">
               <Waveform deck={deckB} side="right" color="#3bd2ff" />
