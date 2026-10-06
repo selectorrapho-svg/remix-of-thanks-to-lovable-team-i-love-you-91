@@ -1,4 +1,5 @@
-import jsmediatags from "jsmediatags";
+// Import the browser bundle directly: the default entry pulls in react-native-fs.
+import jsmediatags from "jsmediatags/dist/jsmediatags.min.js";
 
 type TagPicture = { data: number[]; format: string };
 

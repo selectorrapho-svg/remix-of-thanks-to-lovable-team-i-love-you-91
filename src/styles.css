@@ -367,7 +367,7 @@
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
-  .landscape-jog-slot .reference-jog { width: min(232px, 41vh) !important; }
+  .landscape-jog-slot .reference-jog { width: min(240px, 44vh) !important; }
   .landscape-transport { border-top: 1px solid var(--border); padding-top: 5px; }
   .landscape-transport > button { height: 40px; padding-inline: 2px; border-radius: 2px; }
   .fx-drawer { width: min(340px, 43vw) !important; top: 100px !important; bottom: 55px !important; border-radius: 0 !important; background: var(--secondary); backdrop-filter: none; }
