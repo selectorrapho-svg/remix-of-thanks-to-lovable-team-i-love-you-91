@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.ContentUris
 import android.os.Build
 import android.provider.MediaStore
-import android.net.Uri
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.PermissionState
@@ -51,7 +50,11 @@ class NativeMediaPlugin : Plugin() {
     }
 
     private fun query(base: android.net.Uri, kind: String, out: JSArray) {
-        val cols = arrayOf(
+        val cols = if (kind == "audio") arrayOf(
+            MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DISPLAY_NAME,
+            MediaStore.MediaColumns.TITLE, MediaStore.MediaColumns.DURATION,
+            MediaStore.Audio.Media.ALBUM_ID,
+        ) else arrayOf(
             MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DISPLAY_NAME,
             MediaStore.MediaColumns.TITLE, MediaStore.MediaColumns.DURATION,
         )
@@ -60,10 +63,11 @@ class NativeMediaPlugin : Plugin() {
             val id = c.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
             val name = c.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
             val title = c.getColumnIndexOrThrow(MediaStore.MediaColumns.TITLE)
+            val album = if (kind == "audio") c.getColumnIndex(MediaStore.Audio.Media.ALBUM_ID) else -1
             while (c.moveToNext()) {
                 val mediaId = c.getLong(id)
-                val artworkUri = if (kind == "audio") {
-                    "content://media/external/audio/albumart/$mediaId"
+                val artworkUri = if (kind == "audio" && album >= 0) {
+                    "content://media/external/audio/albumart/${c.getLong(album)}"
                 } else {
                     ContentUris.withAppendedId(base, mediaId).toString()
                 }
