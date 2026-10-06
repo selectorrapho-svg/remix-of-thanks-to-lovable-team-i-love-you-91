@@ -3,7 +3,7 @@ import { Deck, FX_LIBRARY, FxKey } from "@/lib/dj/engine";
 import { useDeck } from "@/lib/dj/useMixer";
 import { Knob } from "./Knob";
 import { Button } from "@/components/ui/button";
-import { Sliders, X, ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
+import { Sliders, X, ChevronLeft, ChevronRight, Settings2, Power } from "lucide-react";
 
 type Tab = "pad" | "instant" | "manual";
 
@@ -72,6 +72,7 @@ export function DeckFxPanel({
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("pad");
   const [padFx, setPadFx] = useState<FxKey>(INSTANT_DEFAULT[2]);
+  const [padOn, setPadOn] = useState(true);
   const [instant, setInstant] = useState<FxKey[]>(INSTANT_DEFAULT);
   const [manual, setManual] = useState<FxKey[]>(MANUAL_DEFAULT);
   const [manualOn, setManualOn] = useState<boolean[]>([false, false, false]);
@@ -176,15 +177,28 @@ export function DeckFxPanel({
             </div>}
             {tab === "pad" && (
               <div className="flex flex-col gap-2">
-                <Selector value={padFx} onPick={(k) => setPadFx(k)} />
-                <div
+              <div className="flex items-center gap-1">
+                <div className="flex-1 min-w-0"><Selector value={padFx} onPick={(k) => setPadFx(k)} /></div>
+                <button
+                  aria-label="Pad FX on/off"
+                  aria-pressed={padOn}
+                  title={padOn ? "Pad FX on — tap to disable" : "Pad FX off — tap to enable"}
+                  onClick={() => setPadOn((o) => { if (o) { deck.setFilter(0); deck.setFx(null); } return !o; })}
+                  className={`grid size-8 shrink-0 place-items-center rounded-full ${padOn ? "dj-glass-on text-primary" : "dj-glass text-muted-foreground"}`}
+                  style={padOn ? { boxShadow: "0 0 10px rgba(80,160,255,0.35), var(--glass-shadow)" } : undefined}
+                >
+                  <Power className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div
                   ref={padRef}
                   onPointerDown={(e) => {
+                    if (!padOn) return;
                     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
                     deck.setFx(padFx, 0.6);
                     padMove(e);
                   }}
-                  onPointerMove={(e) => xy && padMove(e)}
+                  onPointerMove={(e) => padOn && xy && padMove(e)}
                   onPointerUp={() => {
                     setXy(null);
                     deck.setFilter(0);
@@ -192,6 +206,7 @@ export function DeckFxPanel({
                   }}
                   className="relative rounded-xl overflow-hidden select-none"
                   style={{
+                    opacity: padOn ? 1 : 0.35,
                     height: compact ? 150 : 200,
                     touchAction: "none",
                     background:

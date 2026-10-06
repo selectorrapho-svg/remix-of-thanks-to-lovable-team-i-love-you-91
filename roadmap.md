@@ -4,7 +4,9 @@
 - [ ] Verify loaded-track playback and mobile layouts; document native platform limitations honestly.
 - [ ] Match the uploaded portrait top/bottom deck controls, vinyl views, waveform/pads tabs, and combine landscape performance tools; verify both orientations.
 - [x] Activate portrait cue/retrigger, replace vinyl artwork with supplied jog parts, and fit landscape transport/crossfader.
-- [ ] Add library sorting/files view, reference-style FX/sampler grids, and adjustable FX beats.
+- [x] Add library sorting/files view, reference-style FX/sampler grids, and adjustable FX beats.
+- [x] Video mode: Samples replaces Mixer with bottom pads; working Pitch Cue and Skip pads; crossfader Cut spring mode; Pad FX on/off toggle. Verified in browser.
+- [ ] Bundled demo tracks return not-found from the asset store in the dev sandbox ("Unable to decode audio data"); confirm whether they load in the published app or re-upload the audio files.
 - [ ] Add floating master/A/B video monitors and 100+ functional transition/VFX presets; verify browser playback and scratch path.
 
 - [ ] Restyle landscape transport/crossfader as frosted dark-grey controls without gradients; enlarge jogwheels, restore skins and add Rane-inspired style without marker.

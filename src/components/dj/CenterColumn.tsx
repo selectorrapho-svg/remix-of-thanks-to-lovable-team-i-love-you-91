@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { Activity, Grid3x3, Sliders } from "lucide-react";
+import { Activity, Grid3x3, Sliders, Music4 } from "lucide-react";
+import { SamplerPanel } from "./SamplerPanel";
 import { Deck, Mixer } from "@/lib/dj/engine";
 import { useDeck } from "@/lib/dj/useMixer";
 import { Waveform } from "./Waveform";
@@ -14,7 +15,7 @@ import { CuePointGrid } from "./CuePointGrid";
 import { LevelMeter } from "./LevelMeter";
 import { Minus, Maximize2 } from "lucide-react";
 
-type CenterView = "mixer" | "wave" | "pads";
+type CenterView = "mixer" | "wave" | "pads" | "samples";
 
 const EQ_BANDS = ["high", "mid", "low"] as const;
 
@@ -23,6 +24,7 @@ export function CenterColumn({ deckA, deckB, mixer, videoMode = false }: { deckA
   useDeck(deckB);
   const hasVideo = !!deckA.videoEl || !!deckB.videoEl;
   const [view, setView] = useState<CenterView | null>(null);
+  const [cut, setCut] = useState(false);
   const [djs] = useDjSettings();
   const vertical = djs.waveOrientation !== "horizontal";
 
@@ -30,11 +32,17 @@ export function CenterColumn({ deckA, deckB, mixer, videoMode = false }: { deckA
     <div className="flex flex-col h-full py-2 gap-2">
       {videoMode ? <div className="min-h-0 flex-1 flex items-center"><VideoMixStage deckA={deckA} deckB={deckB} embedded /></div> : hasVideo && <FloatingVideo deckA={deckA} deckB={deckB} />}
 
-      {/* 3-button view switcher — Mixer / Waveform (default) / Pads */}
+      {/* 3-button view switcher — Mixer|Samples / Waveform (default) / Pads */}
       <div className="flex items-center justify-center gap-2 py-0.5">
-        <ViewButton active={view === "mixer"} onClick={() => setView(current => current === "mixer" ? null : "mixer")} label="Mixer">
-          <Sliders className="w-4 h-4" />
-        </ViewButton>
+        {videoMode ? (
+          <ViewButton active={view === "samples"} onClick={() => setView(current => current === "samples" ? null : "samples")} label="Samples">
+            <Music4 className="w-4 h-4" />
+          </ViewButton>
+        ) : (
+          <ViewButton active={view === "mixer"} onClick={() => setView(current => current === "mixer" ? null : "mixer")} label="Mixer">
+            <Sliders className="w-4 h-4" />
+          </ViewButton>
+        )}
         <ViewButton active={view === "wave"} onClick={() => setView(current => current === "wave" ? null : "wave")} label="Waveforms">
           <Activity className="w-4 h-4" />
         </ViewButton>
@@ -44,7 +52,7 @@ export function CenterColumn({ deckA, deckB, mixer, videoMode = false }: { deckA
         {view === "wave" && <WaveformOptions />}
       </div>
 
-      <div className={`${view ? "flex-1" : videoMode ? "hidden" : "flex-1"} min-h-0 border-b border-border`}>
+      <div className={`${view && view !== "samples" ? "flex-1" : videoMode ? "hidden" : "flex-1"} min-h-0 border-b border-border`}>
         {view === "wave" && (
           <div className={`flex h-full min-h-0 gap-1 ${vertical ? "" : "flex-col"}`}>
             {!vertical && (<>
@@ -76,8 +84,28 @@ export function CenterColumn({ deckA, deckB, mixer, videoMode = false }: { deckA
         )}
       </div>
 
+      {videoMode && view === "samples" && (
+        <div className="shrink-0 border-t border-border px-2 py-1.5">
+          <SamplerPanel mixer={mixer} inline />
+        </div>
+      )}
+
       <div className="px-2 border-t-2 border-border pt-2 relative before:absolute before:left-1/2 before:-translate-x-1/2 before:-top-4 before:h-4 before:w-px before:bg-border">
-        <Crossfader value={mixer.lastCross} onChange={(v) => mixer.setCrossfade(v)} />
+        <div className="flex items-center gap-2">
+          <button
+            aria-label="Crossfader cut mode"
+            aria-pressed={cut}
+            title={cut ? "Cut on: touch springs the fader back" : "Cut mode: fader springs back for scratching"}
+            onClick={() => setCut((c) => !c)}
+            className={`grid h-8 w-9 shrink-0 place-items-center rounded-md text-[9px] font-bold tracking-widest ${cut ? "dj-glass-on text-primary" : "dj-glass text-muted-foreground"}`}
+            style={cut ? { boxShadow: "0 0 10px rgba(80,160,255,0.35), var(--glass-shadow)" } : undefined}
+          >
+            CUT
+          </button>
+          <div className="min-w-0 flex-1">
+            <Crossfader value={mixer.lastCross} onChange={(v) => mixer.setCrossfade(v)} cut={cut} />
+          </div>
+        </div>
       </div>
     </div>
   );
