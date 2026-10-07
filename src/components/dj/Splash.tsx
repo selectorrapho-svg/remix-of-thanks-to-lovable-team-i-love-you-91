@@ -1,21 +1,15 @@
-import { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/mix4deejays-logo.jpg.asset.json";
 import splash from "@/assets/djogwheels-splash-clean.jpg";
-
-const PLANS = [
-  { id: "year", title: "Pro Yearly", price: "$39.99 / year", note: "Best value · 2 months free", badge: "SAVE 40%" },
-  { id: "month", title: "Pro Monthly", price: "$4.99 / month", note: "Cancel anytime" },
-  { id: "life", title: "Lifetime", price: "$79.99 once", note: "All future updates" },
-];
+import { AccountPanel } from "./AccountPanel";
+import { whatsappPayUrl, PRICE_KES } from "@/lib/dj/license";
 
 /**
- * Original artwork → optional pricing. Pricing is opened only by Next.
+ * Original artwork → optional payment + login. Entering the mixer is only via Skip.
  */
 export function Splash({ onDone }: { onDone: () => void }) {
   const [phase, setPhase] = useState<"splash" | "offer">("splash");
-  const [plan, setPlan] = useState("year");
 
   return (
     <div className="fixed inset-0 z-[100] bg-background dark overflow-hidden">
