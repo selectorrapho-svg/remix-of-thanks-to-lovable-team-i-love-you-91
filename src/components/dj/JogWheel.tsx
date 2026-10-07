@@ -210,7 +210,6 @@ export function JogWheel({ deck, size, accent }: Props) {
           {!deck.coverUrl && <><span className="jog-readout-bpm">{deck.bpm ? (deck.bpm * deck.rate).toFixed(1) : "—"}</span><span className="jog-readout-label">BPM</span></>}
           <span className="jog-readout-time">{fmt(deck.currentTime)}</span>
         </div>
-        <div className="jog-status pointer-events-none"><span>{deck.id}</span><span>{last.current.scratching ? "SCRATCH" : deck.playing ? "PLAY" : "READY"}</span></div>
       </div>
     </div>
   );
