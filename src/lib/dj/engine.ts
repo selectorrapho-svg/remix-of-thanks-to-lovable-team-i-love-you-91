@@ -333,6 +333,22 @@ export class Deck {
     this.emit();
   }
 
+  /** Per-stem level 0..1 for the stems sliders panel. */
+  stemLevels: Record<StemKey, number> = { drums: 1, bass: 1, vocals: 1, other: 1 };
+  setStemLevel(key: StemKey, v: number) {
+    const lvl = Math.max(0, Math.min(1, v));
+    this.stemLevels[key] = lvl;
+    const s = this.stems[key];
+    s.on = lvl > 0.01;
+    const now = this.ctx.currentTime;
+    s.gain.gain.cancelScheduledValues(now);
+    s.gain.gain.setValueAtTime(s.gain.gain.value, now);
+    s.gain.gain.linearRampToValueAtTime(Math.max(0.0001, lvl), now + 0.03);
+    this.emit();
+  }
+
+
+
 
   async loadUrl(url: string, name: string, coverUrl: string | null = null) {
     this.pause();
