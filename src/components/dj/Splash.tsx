@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import splash from "@/assets/djogwheels-splash-clean.jpg";
+import logoAsset from "@/assets/mix4deejays-logo.jpg.asset.json";
+const splash = logoAsset.url;
 
 const PLANS = [
   { id: "year", title: "Pro Yearly", price: "$39.99 / year", note: "Best value · 2 months free", badge: "SAVE 40%" },
@@ -17,11 +18,11 @@ export function Splash({ onDone }: { onDone: () => void }) {
   const [plan, setPlan] = useState("year");
 
   return (
-    <div className="fixed inset-0 z-[100] bg-background overflow-hidden">
+    <div className="fixed inset-0 z-[100] bg-background dark overflow-hidden">
       <img
         src={splash}
-        alt="djogwheels PRO, designed by Vdj Raph"
-        className="absolute inset-0 w-full h-full object-cover"
+        alt="mix4deejays"
+        className="absolute inset-0 w-full h-full object-contain"
       />
       {phase === "splash" && <Button onClick={() => setPhase("offer")} className="absolute bottom-[15%] right-[7%] min-w-28 border border-border bg-background/85 text-foreground shadow-lg backdrop-blur-md hover:bg-background" aria-label="Next to pricing">Next</Button>}
 
@@ -36,7 +37,7 @@ export function Splash({ onDone }: { onDone: () => void }) {
               <X className="h-4 w-4" />
             </Button>
 
-            <div className="text-sm font-semibold">Unlock djogwheels PRO</div>
+            <div className="text-sm font-semibold">Unlock mix4deejays PRO</div>
             <div className="text-[11px] text-muted-foreground mt-0.5">
               Real stems separation · 100+ FX packs · video mixing · no watermark · controller mapping
             </div>
