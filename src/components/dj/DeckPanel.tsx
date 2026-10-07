@@ -9,6 +9,7 @@ import { SyncButton } from "./SyncButton";
 import { Pause, Play, ChevronLeft, ChevronRight, ChevronDown, Repeat, Check } from "lucide-react";
 import { useState } from "react";
 import { VideoPreview } from "./VideoPreview";
+import { StemsPanel } from "./StemsPanel";
 import { Button } from "@/components/ui/button";
 
 const LOOP_LENGTHS = ["1/32", "1/16", "1/8", "1/4", "1/2", "1", "2", "4", "8", "16", "32"];
@@ -26,6 +27,7 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
   useDeck(deck);
   const accent = side === "left" ? "#ff8a3b" : "#3bd2ff";
   const [showVideo, setShowVideo] = useState(true);
+  const [stemsOpen, setStemsOpen] = useState(false);
   const [loopIdx, setLoopIdx] = useState(7); // default "4"
   const [loopMenuOpen, setLoopMenuOpen] = useState(false);
   const [loopMode, setLoopMode] = useState(LOOP_MODES[0]);
@@ -34,7 +36,7 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
     <div className={`flex gap-2 h-full min-h-0 overflow-hidden ${compact ? "px-1 py-1" : "px-2 py-2"}`}>
       {side === "left" && !compact && <SideStrip deck={deck} accent={accent} side={side} compact={compact} />}
 
-      <div className="flex-1 flex flex-col items-center justify-between min-w-0">
+      <div className="relative flex-1 flex flex-col items-center justify-between min-w-0">
         {/* top row */}
         <div className="w-full flex items-center justify-between gap-1 text-[10px] uppercase tracking-widest">
           {/* djay-style loop group: ‹ | ↻ beats | › + mode dropdown */}
@@ -177,16 +179,18 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
             <Repeat className="w-4 h-4" style={{ color: accent }} />
           </Button>
           <Button variant="ghost"
-            onClick={() => deck.toggleStem("vocals")}
+            onClick={() => setStemsOpen((o) => !o)}
             className={`shrink-0 rounded-xl flex items-center justify-center font-bold text-sm ${compact ? "h-10" : "h-11"} ${
-              deck.stems.vocals.on ? "dj-glass" : "dj-glass-on"
+              stemsOpen ? "dj-glass-on" : "dj-glass"
             }`}
             style={{ color: accent }}
-            title="Stems — toggle vocals"
+            title="Stems sliders"
+            aria-expanded={stemsOpen}
           >
             S
           </Button>
         </div>
+        {stemsOpen && <StemsPanel deck={deck} accent={accent} onClose={() => setStemsOpen(false)} />}
 
 
         {/* hot cues live in the per-deck Cues drawer (side strip) */}

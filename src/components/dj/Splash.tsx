@@ -17,14 +17,15 @@ export function Splash({ onDone }: { onDone: () => void }) {
       <img
         src={splash}
         alt="DJ splash artwork designed by VdjRaph"
-        className="absolute inset-0 w-full h-full object-contain"
+        className="splash-art absolute inset-0 w-full h-full object-cover"
       />
-      <img src={logoAsset.url} alt="mix4deejays" className="absolute left-4 top-4 h-16 w-16 rounded-md object-contain" />
-      {phase === "splash" && <Button onClick={() => setPhase("offer")} className="absolute bottom-[15%] right-[7%] min-w-28 border border-border bg-background/85 text-foreground shadow-lg backdrop-blur-md hover:bg-background" aria-label="Next to pricing">Next</Button>}
+      <div className="splash-sheen pointer-events-none absolute inset-0" />
+      <img src={logoAsset.url} alt="mix4deejays" className="splash-logo absolute left-4 top-4 h-16 w-16 rounded-md object-contain" />
+      {phase === "splash" && <Button onClick={() => setPhase("offer")} className="splash-next absolute bottom-[12%] right-[7%] min-w-28 border border-border bg-background/60 text-foreground shadow-lg backdrop-blur-md hover:bg-background" aria-label="Next to pricing">Next</Button>}
 
       {phase === "offer" && (
-        <div className="absolute inset-0 flex justify-center overflow-y-auto bg-background/75 p-3 backdrop-blur-md">
-          <div className="relative my-auto w-full max-w-[420px] rounded-2xl border border-border bg-background/90 p-4 shadow-xl">
+        <div className="pricing-rainbow absolute inset-0 flex justify-center overflow-y-auto p-3">
+          <div className="pricing-glass relative my-auto w-full max-w-[420px] rounded-2xl p-4">
             <Button variant="ghost" size="icon"
               onClick={onDone}
               aria-label="Continue without subscribing"
