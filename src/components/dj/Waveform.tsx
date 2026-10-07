@@ -35,7 +35,7 @@ export function Waveform({ deck, side }: Props) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
     const resize = () => {
       const w = canvas.clientWidth * dpr;
       const h = canvas.clientHeight * dpr;
@@ -65,7 +65,7 @@ export function Waveform({ deck, side }: Props) {
         const samples = peaks.overall.length;
         const secsPerBin = dur / samples;
 
-        ctx.globalCompositeOperation = "lighter";
+        ctx.globalCompositeOperation = "source-over";
         for (const [key, col, scale] of stemBands()) {
           if (!deck.stems[BAND_STEM[key as string]].on) continue;
           const arr = peaks[key] as Float32Array;
@@ -147,8 +147,10 @@ export function Waveform({ deck, side }: Props) {
       });
     };
 
+    let frame = 0;
     const loop = () => {
-      draw();
+      // idle decks redraw ~10fps to keep phones cool and responsive
+      if (deck.playing || deck.scratching || frame++ % 6 === 0) draw();
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
@@ -205,7 +207,7 @@ export function TrackOverview({ deck, accent }: { deck: Deck; accent: string }) 
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
     const draw = () => {
       const w = canvas.clientWidth * dpr;
       const h = canvas.clientHeight * dpr;
@@ -222,7 +224,7 @@ export function TrackOverview({ deck, accent }: { deck: Deck; accent: string }) 
         return;
       }
       const n = peaks.overall.length;
-      ctx.globalCompositeOperation = "lighter";
+      ctx.globalCompositeOperation = "source-over";
       for (const [key, col, scale] of stemBands()) {
         const arr = peaks[key] as Float32Array;
         ctx.beginPath();
@@ -251,8 +253,10 @@ export function TrackOverview({ deck, accent }: { deck: Deck; accent: string }) 
         ctx.fillRect(cx, 0, 1, h);
       });
     };
+    let frame = 0;
     const loop = () => {
-      draw();
+      // idle decks redraw ~10fps to keep phones cool and responsive
+      if (deck.playing || deck.scratching || frame++ % 6 === 0) draw();
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);

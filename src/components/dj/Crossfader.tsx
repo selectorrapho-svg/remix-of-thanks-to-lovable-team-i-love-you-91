@@ -7,7 +7,7 @@ export function Crossfader({ onChange, value: externalValue, cut = false }: { on
   const saved = useRef<number | null>(null);
   const [value, setValue] = useState(externalValue ?? 0.5);
   useEffect(() => {
-    const id = window.setInterval(() => setValue(getMixer()?.lastCross ?? externalValue ?? 0.5), 50);
+    const id = window.setInterval(() => { const v = getMixer()?.lastCross ?? externalValue ?? 0.5; setValue(p => (Math.abs(p - v) > 0.001 ? v : p)); }, 80);
     return () => window.clearInterval(id);
   }, [externalValue]);
   const update = useCallback((cx: number) => {

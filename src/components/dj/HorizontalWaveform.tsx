@@ -34,7 +34,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1);
     const resize = () => {
       const w = canvas.clientWidth * dpr;
       const h = canvas.clientHeight * dpr;
@@ -68,7 +68,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
       const secsPerBin = dur / samples;
       const step = Math.max(1, Math.floor(dpr));
 
-      ctx.globalCompositeOperation = "lighter";
+      ctx.globalCompositeOperation = "source-over";
       for (const [key, col, scale] of stemBands()) {
         if (!deck.stems[BAND_STEM[key as string]].on) continue;
         const arr = peaks[key] as Float32Array;
@@ -141,8 +141,10 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
       ctx.fillText(String(index), 6, 14 * dpr);
     };
 
+    let frame = 0;
     const loop = () => {
-      draw();
+      // idle decks redraw ~10fps to keep phones cool and responsive
+      if (deck.playing || deck.scratching || frame++ % 6 === 0) draw();
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);

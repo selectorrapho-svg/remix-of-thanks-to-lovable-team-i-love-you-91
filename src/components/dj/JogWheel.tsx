@@ -115,7 +115,7 @@ export function JogWheel({ deck, size, accent }: Props) {
   }, [deck]);
 
   useEffect(() => {
-    const id = setInterval(() => tick((t) => (t + 1) % 1000), 100);
+    const id = setInterval(() => tick((t) => (t + 1) % 1000), 250);
     return () => clearInterval(id);
   }, []);
 
