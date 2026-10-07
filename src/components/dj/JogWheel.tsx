@@ -210,7 +210,51 @@ export function JogWheel({ deck, size, accent }: Props) {
           {!deck.coverUrl && <><span className="jog-readout-bpm">{deck.bpm ? (deck.bpm * deck.rate).toFixed(1) : "—"}</span><span className="jog-readout-label">BPM</span></>}
           <span className="jog-readout-time">{fmt(deck.currentTime)}</span>
         </div>
+        {s.jogStyle === "silver" && loaded && <SeekNeedle deck={deck} />}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Rane/Mixxx-style silver position needle: its angle shows track progress
+ * (full circle = whole track). Drag it around the platter to seek back/forward.
+ */
+function SeekNeedle({ deck }: { deck: Deck }) {
+  const needleRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      if (needleRef.current && !dragging.current && deck.duration > 0) {
+        needleRef.current.style.transform = `rotate(${(deck.currentTime / deck.duration) * 360}deg)`;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [deck]);
+
+  const toAngle = (e: React.PointerEvent) => {
+    const box = (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect();
+    const a = Math.atan2(e.clientX - (box.left + box.width / 2), -(e.clientY - (box.top + box.height / 2)));
+    return ((a * 180) / Math.PI + 360) % 360;
+  };
+  const apply = (e: React.PointerEvent) => {
+    const deg = toAngle(e);
+    if (needleRef.current) needleRef.current.style.transform = `rotate(${deg}deg)`;
+    if (deck.duration > 0) deck.seek((deg / 360) * deck.duration);
+  };
+
+  return (
+    <div ref={needleRef} className="seek-needle" aria-hidden>
+      <div
+        className="seek-needle-grip"
+        onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); }}
+        onPointerMove={(e) => { if (dragging.current) { e.stopPropagation(); apply(e); } }}
+        onPointerUp={(e) => { e.stopPropagation(); dragging.current = false; }}
+        onPointerCancel={() => { dragging.current = false; }}
+      />
     </div>
   );
 }

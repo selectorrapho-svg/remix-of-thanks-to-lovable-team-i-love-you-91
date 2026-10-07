@@ -429,3 +429,29 @@
   .wave-options { background: color-mix(in oklab, var(--secondary) 90%, transparent); border: 1px solid var(--glass-border); backdrop-filter: blur(24px); box-shadow: var(--glass-shadow); }
   .wave-high-contrast canvas { filter: contrast(1.65) saturate(1.25); }
 }
+
+/* ---- Stems sliders ---- */
+.stem-slider { writing-mode: vertical-lr; direction: rtl; width: 28px; height: 96px; accent-color: var(--stem-accent, var(--primary)); }
+
+/* ---- Silver seek needle (Rane-style) ---- */
+.seek-needle { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.seek-needle::before { content: ""; position: absolute; left: 50%; top: 3%; width: 3px; height: 20%; transform: translateX(-50%); border-radius: 2px;
+  background: linear-gradient(180deg, oklch(0.98 0 0), oklch(0.72 0 0) 60%, oklch(0.45 0 0)); box-shadow: 0 0 6px oklch(0.95 0 0 / .7), 0 1px 2px oklch(0 0 0 / .6); }
+.seek-needle::after { content: ""; position: absolute; left: 50%; top: 2%; width: 12px; height: 12px; transform: translate(-50%, -30%); border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, oklch(1 0 0), oklch(0.75 0 0) 55%, oklch(0.4 0 0)); box-shadow: 0 1px 3px oklch(0 0 0 / .7); }
+.seek-needle-grip { position: absolute; left: 50%; top: 0; width: 36px; height: 26%; transform: translateX(-50%); pointer-events: auto; touch-action: none; cursor: grab; }
+
+/* ---- Splash animation ---- */
+@keyframes splash-zoom { from { transform: scale(1.08); } to { transform: scale(1); } }
+@keyframes splash-sheen { 0% { transform: translateX(-120%) skewX(-20deg); } 60%,100% { transform: translateX(220%) skewX(-20deg); } }
+@keyframes splash-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.splash-art { animation: splash-zoom 6s ease-out both; }
+.splash-sheen { overflow: hidden; }
+.splash-sheen::after { content: ""; position: absolute; top: 0; bottom: 0; width: 35%; background: linear-gradient(90deg, transparent, oklch(1 0 0 / .18), transparent); animation: splash-sheen 4s ease-in-out 1s infinite; }
+.splash-logo { animation: splash-rise .8s ease-out .3s both; }
+.splash-next { animation: splash-rise .8s ease-out .9s both; }
+
+/* ---- Pricing: frosted glass on rainbow ---- */
+@keyframes rainbow-shift { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+.pricing-rainbow { background: linear-gradient(120deg, oklch(0.65 0.25 25), oklch(0.8 0.18 85), oklch(0.7 0.2 150), oklch(0.65 0.18 230), oklch(0.55 0.25 300), oklch(0.65 0.25 25)); background-size: 200% 200%; animation: rainbow-shift 12s linear infinite; }
+.pricing-glass { background: oklch(0.15 0.01 260 / .45); backdrop-filter: blur(22px) saturate(160%); border: 1px solid oklch(1 0 0 / .25); box-shadow: 0 20px 50px oklch(0 0 0 / .45), inset 0 1px 0 oklch(1 0 0 / .2); animation: splash-rise .5s ease-out both; }
