@@ -11,32 +11,12 @@ interface Props {
 // Bundled locally (not CDN) so the jog skins also work fully offline in the APK.
 import jogPioneer from "@/assets/jogs/jog-pioneer.jpeg";
 import jogNeonDisc from "@/assets/jogs/jog-neon-disc.webp";
-import diamondArm from "@/assets/jogs/diamond_skin_tete_de_lecture_left.webp.asset.json";
-import goldArm from "@/assets/jogs/gold_skin_tete_de_lecture.webp.asset.json";
 import neonArm from "@/assets/jogs/neon_skin_tete_de_lecture.jpg.asset.json";
 import unloadedJog from "@/assets/jogs/jog-unloaded.png.asset.json";
 import raneJog from "@/assets/jogs/rane-inspired.png";
 import loadedJog from "@/assets/jogs/jog-loaded.png.asset.json";
 
-const JOG_BG: Record<string, string> = {
-  silver: "#c8c8c8",
-  black: "#111",
-  neon: "#0a0a1a",
-  pioneer: "#0c0c0c",
-  pioneer3d: "#0c0c0c",
-  neonDisc: "#08081a",
-  neonDisc3d: "#08081a",
-  vinyl: "#151515",
-  chrome: "#d8dde2",
-  army: "#3b4028",
-  olive: "#4b5320",
-  carbon: "#141416",
-  gold: "#a8842c",
-  diamondVinyl: "#092323",
-  goldVinyl: "#292011",
-  neonVinyl: "#101427",
-};
-const VINYL_ARM: Record<string, string> = { diamondVinyl: diamondArm.url, goldVinyl: goldArm.url, neonVinyl: neonArm.url };
+const VINYL_ARM: Record<string, string> = { neonVinyl: neonArm.url };
 const JOG_IMAGE: Record<string, string | undefined> = {
   pioneer: jogPioneer,
   pioneer3d: jogPioneer,
@@ -128,23 +108,32 @@ export function JogWheel({ deck, size, accent }: Props) {
     };
     let pointerId = -1;
     let idleTimer = 0;
-    let moved = false;
+    let radius = 1;
     const down = (e: PointerEvent) => {
       if (!deck.buffer || pointerId !== -1) return;
       const box = el.getBoundingClientRect();
       c = { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+      radius = box.width / 2;
       e.preventDefault();
       clearTimeout(idleTimer);
       pointerId = e.pointerId;
       el.setPointerCapture(pointerId);
       last.current = { angle: ang(e.clientX, e.clientY), t: e.timeStamp, scratching: true };
-      moved = false;
       deck.scratchStart();
     };
     // Process every raw sample of the pointer stream (not just the throttled
     // one the browser delivers) so fast flares track 1:1 with the finger.
     const step = (x: number, y: number, now: number) => {
       const a = ang(x, y);
+      // The spindle has no meaningful angular velocity; avoid a full-speed
+      // burst when a finger crosses the centre of the platter.
+      if (Math.hypot(x - c.x, y - c.y) < radius * 0.12) {
+        last.current.angle = a;
+        last.current.t = now;
+        deck.scratch(0);
+        return;
+      }
+      if (now <= last.current.t) return;
       let d = a - last.current.angle;
       if (d > Math.PI) d -= 2 * Math.PI;
       if (d < -Math.PI) d += 2 * Math.PI;
@@ -161,7 +150,6 @@ export function JogWheel({ deck, size, accent }: Props) {
       rotRef.current = (rotRef.current + (d * 180) / Math.PI + 360) % 360;
       last.current.angle = a;
       last.current.t = now;
-      if (Math.abs(d) > 0.002) moved = true;
     };
     const move = (e: PointerEvent) => {
       if (e.pointerId !== pointerId || !last.current.scratching) return;
@@ -211,14 +199,18 @@ export function JogWheel({ deck, size, accent }: Props) {
   const isVinyl = !!arm;
 
   return (
-    <div className="reference-jog" style={{ width: size, maxWidth: "100%" }}>
+    <div className="reference-jog extended-jog" style={{ width: size, maxWidth: "100%" }}>
       <div ref={ref} data-loaded={loaded} role="slider" aria-label={`Scratch deck ${deck.id}`} aria-valuemin={0} aria-valuemax={deck.duration} aria-valuenow={deck.currentTime} className="relative aspect-square w-full touch-none select-none">
         <div ref={ringRef} data-skin={s.jogStyle} className={`jog-skin absolute inset-0 pointer-events-none will-change-transform rounded-full ${is3d ? "jog-depth" : ""}`}>
           {skin ? <img src={skin} alt={`${s.jogStyle} jogwheel`} width={1024} height={1024} loading="lazy" draggable={false} className="size-full rounded-full object-contain" /> : s.jogStyle === "silver" ? <img src={loaded ? loadedJog.url : unloadedJog.url} alt={loaded ? "Loaded silver jogwheel" : "Empty dark jogwheel"} draggable={false} className="size-full rounded-full object-contain" /> : <><div className="jog-grooves" /><div className="jog-label" /></>}
           {isVinyl && <img src={arm} alt="" draggable={false} className="jog-tonearm" />}
           {loaded && deck.coverUrl && <img src={deck.coverUrl} alt="" draggable={false} className="jog-album-art" onError={e => { e.currentTarget.style.display = "none"; }} />}
         </div>
-
+        <div className="jog-readout pointer-events-none" data-loaded={loaded}>
+          {!deck.coverUrl && <><span className="jog-readout-bpm">{deck.bpm ? (deck.bpm * deck.rate).toFixed(1) : "—"}</span><span className="jog-readout-label">BPM</span></>}
+          <span className="jog-readout-time">{fmt(deck.currentTime)}</span>
+        </div>
+        <div className="jog-status pointer-events-none"><span>{deck.id}</span><span>{last.current.scratching ? "SCRATCH" : deck.playing ? "PLAY" : "READY"}</span></div>
       </div>
     </div>
   );

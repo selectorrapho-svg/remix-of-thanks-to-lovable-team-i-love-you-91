@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/mix4deejays-logo.jpg.asset.json";
-const splash = logoAsset.url;
+import splash from "@/assets/djogwheels-splash-clean.jpg";
 
 const PLANS = [
   { id: "year", title: "Pro Yearly", price: "$39.99 / year", note: "Best value · 2 months free", badge: "SAVE 40%" },
@@ -21,9 +21,10 @@ export function Splash({ onDone }: { onDone: () => void }) {
     <div className="fixed inset-0 z-[100] bg-background dark overflow-hidden">
       <img
         src={splash}
-        alt="mix4deejays"
+        alt="DJ splash artwork designed by VdjRaph"
         className="absolute inset-0 w-full h-full object-contain"
       />
+      <img src={logoAsset.url} alt="mix4deejays" className="absolute left-4 top-4 h-16 w-16 rounded-md object-contain" />
       {phase === "splash" && <Button onClick={() => setPhase("offer")} className="absolute bottom-[15%] right-[7%] min-w-28 border border-border bg-background/85 text-foreground shadow-lg backdrop-blur-md hover:bg-background" aria-label="Next to pricing">Next</Button>}
 
       {phase === "offer" && (

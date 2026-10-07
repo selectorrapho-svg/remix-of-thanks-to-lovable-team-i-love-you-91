@@ -14,9 +14,6 @@ export type JogStyle =
   | "army"
   | "olive"
   | "carbon"
-  | "gold"
-  | "diamondVinyl"
-  | "goldVinyl"
   | "neonVinyl";
 
 export const JOG_STYLES: { key: JogStyle; label: string }[] = [
@@ -33,12 +30,12 @@ export const JOG_STYLES: { key: JogStyle; label: string }[] = [
   { key: "army", label: "Army" },
   { key: "olive", label: "Army Green" },
   { key: "carbon", label: "Carbon" },
-  { key: "gold", label: "Gold" },
-  { key: "diamondVinyl", label: "Diamond vinyl" },
-  { key: "goldVinyl", label: "Gold vinyl" },
   { key: "neonVinyl", label: "Neon vinyl" },
 ];
 
+export function normalizeJogStyle(value: unknown): JogStyle {
+  return JOG_STYLES.find((style) => style.key === value)?.key ?? "silver";
+}
 
 export type VideoTransition = "cut" | "fade" | "dip" | "zoom" | "slide" | "flash";
 export type VideoFx = "none" | "bw" | "invert" | "sepia" | "strobe" | "blur" | "rgb" | "hue";
@@ -104,7 +101,10 @@ let current: DjSettings = DEFAULT;
 if (typeof window !== "undefined") {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) current = { ...DEFAULT, ...JSON.parse(raw) };
+    if (raw) {
+      const saved = JSON.parse(raw);
+      current = { ...DEFAULT, ...saved, jogStyle: normalizeJogStyle(saved.jogStyle) };
+    }
   } catch {}
   (globalThis as { __djWaveColor?: string; __djBrake?: boolean }).__djWaveColor = current.waveColor;
   (globalThis as { __djBrake?: boolean }).__djBrake = current.brakeOnPause;
@@ -121,7 +121,7 @@ export function useDjSettings(): [DjSettings, (p: Partial<DjSettings>) => void] 
     };
   }, []);
   const update = (p: Partial<DjSettings>) => {
-    current = { ...current, ...p };
+    current = { ...current, ...p, jogStyle: normalizeJogStyle(p.jogStyle ?? current.jogStyle) };
     (globalThis as { __djWaveColor?: string; __djBrake?: boolean }).__djWaveColor = current.waveColor;
   (globalThis as { __djBrake?: boolean }).__djBrake = current.brakeOnPause;
     try {
