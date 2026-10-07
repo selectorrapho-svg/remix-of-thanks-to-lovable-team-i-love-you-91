@@ -120,9 +120,10 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
               deck.toggleSync(other);
             }}
             active={deck.syncLocked}
+            bpm={deck.bpm * deck.rate}
             accent={accent}
             width={compact ? 48 : 58}
-            height={24}
+            height={deck.syncLocked ? 30 : 24}
           />
         </div>
 
