@@ -1,8 +1,10 @@
 # Task roadmap
 
 ## Current request
+- [ ] Restore original splash artwork with mix4deejays as a logo only.
+- [ ] Remove all gold/diamond jog styles, extend remaining platter designs and improve touch scratching.
 - [ ] Fix the S-button stems panel and verify its four audio sliders.
-- [ ] Add silver-only seek needle, finish diamond/gold vinyl skins and extended jog options.
+- [ ] Add silver-only seek needle and extended jog options; gold/diamond styles are withdrawn.
 - [ ] Add splash Next → payment/login/Skip using the supplied mix4deejays logo.
 - [ ] Move Cut to Settings and consolidate performance FX controls.
 - [ ] Replace floating FX library with a large high-contrast load-effect browser.
