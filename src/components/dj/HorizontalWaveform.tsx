@@ -144,7 +144,7 @@ export function HorizontalWaveform({ deck, color, index }: Props) {
     let frame = 0;
     const loop = () => {
       // idle decks redraw ~10fps to keep phones cool and responsive
-      if (deck.playing || deck.scratching || frame++ % 6 === 0) draw();
+      if (deck.playing || deck.scratchingVideo || frame++ % 6 === 0) draw();
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
