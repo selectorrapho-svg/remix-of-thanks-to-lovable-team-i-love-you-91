@@ -169,11 +169,11 @@ export function PortraitLayout({
         <div className="flex items-center justify-center h-9 text-sm font-semibold">{deckLeft.id}</div><div className="flex items-center justify-center h-9 text-sm font-semibold">{deckRight.id}</div>
       </div>
       <div className="grid grid-cols-[auto_1fr_auto_1fr_auto] items-center gap-1 h-12 px-2 shrink-0 border-t border-border">
-        <SyncButton onClick={() => deckLeft.toggleSync(deckRight)} active={deckLeft.syncLocked} accent="#ff8a3b" width={58} height={32} />
+        <SyncButton onClick={() => deckLeft.toggleSync(deckRight)} active={deckLeft.syncLocked} bpm={deckLeft.bpm * deckLeft.rate} accent="#ff8a3b" width={58} height={32} />
         <span className="text-xs tabular-nums text-muted-foreground">{deckLeft.bpm ? deckLeft.bpm.toFixed(1) : "—"} <small>BPM</small></span>
         <button onClick={() => setSheet("tools")} aria-label="Open tools" title="Loops, cues, FX, samples and EQ" className="grid size-9 place-items-center rounded-full border border-border bg-secondary"><Sliders className="size-4" /></button>
         <span className="text-right text-xs tabular-nums text-muted-foreground">{deckRight.bpm ? deckRight.bpm.toFixed(1) : "—"} <small>BPM</small></span>
-        <SyncButton onClick={() => deckRight.toggleSync(deckLeft)} active={deckRight.syncLocked} accent="#3bd2ff" width={58} height={32} />
+        <SyncButton onClick={() => deckRight.toggleSync(deckLeft)} active={deckRight.syncLocked} bpm={deckRight.bpm * deckRight.rate} accent="#3bd2ff" width={58} height={32} />
       </div>
       <div className="grid grid-cols-[1fr_1fr] gap-2 px-2 h-10 shrink-0 border-t border-border">
         {[deckLeft, deckRight].map((deck) => <button key={deck.id} onClick={() => deck.triggerCue()} onContextMenu={(e) => { e.preventDefault(); deck.setCue(); }} title="Cue — set while paused, restart while playing" aria-label={`Set or trigger cue deck ${deck.id}`} className="rounded-sm border border-border bg-secondary text-xs font-semibold">{deck.playing ? "CUE ↻" : "SET CUE"}</button>)}

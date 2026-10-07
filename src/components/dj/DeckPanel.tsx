@@ -133,7 +133,7 @@ export function DeckPanel({ deck, side, compact, videoMode }: Props) {
               {deck.trackName || "No track"}
             </div>
             <div className="text-lg tabular-nums font-light" style={{ color: accent }}>
-              {deck.bpm ? deck.bpm.toFixed(1) : "—"}
+              {deck.bpm ? (deck.bpm * deck.rate).toFixed(1) : "—"}
             </div>
           </div>
         ) : (
@@ -205,9 +205,9 @@ function SideStrip({ deck, accent, side, compact }: { deck: Deck; accent: string
         side === "left" ? "order-first" : "order-last"
       }`}
     >
-      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">BPM</div>
+      <div className="text-[9px] uppercase tracking-widest" style={{ color: deck.syncLocked ? accent : "var(--muted-foreground)" }}>{deck.syncLocked ? "Synced" : "BPM"}</div>
       <div className={`${compact ? "text-[11px]" : "text-sm"} font-medium`} style={{ color: accent }}>
-        {deck.bpm ? deck.bpm.toFixed(1) : "—"}
+        {deck.bpm ? (deck.bpm * deck.rate).toFixed(1) : "—"}
       </div>
       <Fader
         value={1 - (deck.pitch + 25) / 50}

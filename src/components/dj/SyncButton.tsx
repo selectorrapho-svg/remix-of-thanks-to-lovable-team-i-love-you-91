@@ -6,6 +6,7 @@ export function SyncButton({
   width = 62,
   height = 26,
   accent,
+  bpm,
 }: {
   onClick: () => void;
   active?: boolean;
@@ -13,11 +14,13 @@ export function SyncButton({
   width?: number;
   height?: number;
   accent?: string;
+  /** Effective (tempo-adjusted) BPM shown djay-style while synced. */
+  bpm?: number;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`grid place-items-center active:scale-[0.97] transition-transform ${
+      className={`flex flex-col items-center justify-center leading-none active:scale-[0.97] transition-transform ${
         active ? "dj-glass-on" : "dj-glass"
       }`}
       style={{
@@ -35,8 +38,13 @@ export function SyncButton({
           color: active && accent ? accent : "var(--foreground)",
         }}
       >
-        {label}
+        {active && bpm ? "SYNCED" : label}
       </span>
+      {active && bpm ? (
+        <span className="tabular-nums font-bold leading-none" style={{ fontSize: Math.max(9, height * 0.4), color: accent ?? "var(--foreground)" }}>
+          {bpm.toFixed(1)}
+        </span>
+      ) : null}
     </button>
   );
 }
